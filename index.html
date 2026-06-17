@@ -1266,6 +1266,8 @@ function buildBar(){
   document.getElementById('user-sel').innerHTML=`<span class="usr-btn ${currentUser.role==='local'?'active-local':'active-ext'}" style="cursor:default">${currentUser.name}<span class="${currentUser.role==='ext'?'role-ext':'role-local'}">${currentUser.role==='ext'?'ext':'local'}</span></span>`;
   const rc=document.getElementById('retiro-form-card');
   if(rc)rc.style.display=currentUser.role==='local'?'block':'none';
+  const hb2=document.getElementById('tab-historial');
+  if(hb2)hb2.style.display=currentUser.id==='alcides'?'none':'';
 }
 function setUser(id){}
 function setTab(t){
@@ -1280,6 +1282,11 @@ function setTab(t){
   else if(t==='historial')cargarHistorial();
   else if(t==='stock')cargarStock();
 }
+
+document.addEventListener('DOMContentLoaded',function(){
+  const lo=document.getElementById('login-overlay');
+  if(lo){lo.style.display='flex';}
+});
 
 </script>
 </body>
