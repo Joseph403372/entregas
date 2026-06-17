@@ -542,7 +542,7 @@ async function init(){
     const t=await getToken();
     const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,{headers:{Authorization:'Bearer '+t}});
     const d=await res.json();const sh=d.sheets?.map(s=>s.properties.title)||[];
-    for(const n of['Paquetes','Retiros']){
+    for(const n of['Paquetes','Retiros','Caja']){
       if(!sh.includes(n))await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:n}}}]})});
     }
     const hp=await sGet('Paquetes!A1:A1');
@@ -550,8 +550,10 @@ async function init(){
     const hr=await sGet('Retiros!A1:A1');
     if(!hr.values)await sApp('Retiros!A1',[['ID','Fecha','Hora','Monto','Motivo','Usuario']]);
     // Init Caja sheet with SaldoInicial if empty
-    const hc=await sGet('Caja!A1:B1');
-    if(!hc.values||!hc.values.length)await sApp('Caja!A1',[['SaldoInicial',3361000]]);
+    try{
+      const hc=await sGet('Caja!A1:B1');
+      if(!hc.values||!hc.values.length)await sApp('Caja!A1',[['SaldoInicial',3361000]]);
+    }catch(e){console.log('Caja init error',e);}
   }catch(e){console.error(e);}
 }
 
