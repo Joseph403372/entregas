@@ -609,7 +609,7 @@ async function cargarHistorial(){
 }
 
 function construirMeses(){
-  const mesesSet=new Set(todosLosPaquetes.filter(p=>p.estado==='entregado').map(p=>mesAnio(p.fecha)));
+  const mesesSet=new Set(todosLosPaquetes.filter(p=>p.estado==='entregado').map(p=>mesAnio((p.hora&&p.hora.length>5?p.hora:p.fecha).slice(0,7))));
   const mesesArr=[...mesesSet].sort().reverse();
   const picker=document.getElementById('month-picker');
   if(!mesesArr.length){picker.innerHTML='<span style="color:#9ca3af;font-size:13px">Sin datos aun</span>';return;}
@@ -625,7 +625,7 @@ function verMes(mes){
   document.querySelectorAll('.month-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===(() => {const[y,mo]=mes.split('-');return MESES[parseInt(mo)-1]+' '+y;})()));
   const[y,mo]=mes.split('-');
   const nombre=MESES[parseInt(mo)-1]+' '+y;
-  const entregados=todosLosPaquetes.filter(p=>p.estado==='entregado'&&mesAnio(p.fecha)===mes);
+  const entregados=todosLosPaquetes.filter(p=>p.estado==='entregado'&&mesAnio((p.hora&&p.hora.length>5?p.hora:p.fecha+' '+p.hora).slice(0,7))===mes);
   const retirosM=todosLosRetiros.filter(r=>mesAnio(r.fecha)===mes);
   const totalEf=entregados.filter(p=>p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
   const totalTj=entregados.filter(p=>p.pagoReal==='tarjeta').reduce((a,p)=>a+p.montoReal,0);
@@ -635,7 +635,7 @@ function verMes(mes){
   const totalRet=retirosM.reduce((a,r)=>a+r.monto,0);
   const usuarios=['Alcides','Joseph'];
   const diasMap={};
-  entregados.forEach(p=>{if(!diasMap[p.fecha])diasMap[p.fecha]={ef:0,tj:0,qr:0,paq:0};diasMap[p.fecha].paq++;if(p.pagoReal==='efectivo')diasMap[p.fecha].ef+=p.montoReal;else if(p.pagoReal==='tarjeta')diasMap[p.fecha].tj+=p.montoReal;else if(p.pagoReal==='qr')diasMap[p.fecha].qr+=p.montoReal;});
+  entregados.forEach(p=>{const dk=(p.hora&&p.hora.length>5?p.hora:p.fecha).slice(0,10);if(!diasMap[dk])diasMap[dk]={ef:0,tj:0,qr:0,paq:0};diasMap[dk].paq++;if(p.pagoReal==='efectivo')diasMap[dk].ef+=p.montoReal;else if(p.pagoReal==='tarjeta')diasMap[dk].tj+=p.montoReal;else if(p.pagoReal==='qr')diasMap[dk].qr+=p.montoReal;});
   const diasArr=Object.entries(diasMap).sort((a,b)=>b[0].localeCompare(a[0]));
   const maxTotal=Math.max(...diasArr.map(([,v])=>v.ef+v.tj+v.qr),1);
   let h=`<div class="resumen-mes">
@@ -696,8 +696,8 @@ function aplicarFiltro(){
   const pago=document.getElementById('h-pago').value;
   const usuario=document.getElementById('h-usuario').value;
   let filtrados=todosLosPaquetes.filter(p=>p.estado==='entregado');
-  if(desde)filtrados=filtrados.filter(p=>p.fecha>=desde);
-  if(hasta)filtrados=filtrados.filter(p=>p.fecha<=hasta);
+  if(desde)filtrados=filtrados.filter(p=>(p.hora&&p.hora.length>5?p.hora:p.fecha).slice(0,10)>=desde);
+  if(hasta)filtrados=filtrados.filter(p=>(p.hora&&p.hora.length>5?p.hora:p.fecha).slice(0,10)<=hasta);
   if(pago)filtrados=filtrados.filter(p=>p.pagoReal===pago);
   if(usuario)filtrados=filtrados.filter(p=>p.quien===usuario);
   filtrados.sort((a,b)=>b.fecha.localeCompare(a.fecha));
