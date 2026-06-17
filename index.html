@@ -1193,8 +1193,8 @@ async function confirmarCobroPendiente(){
   try{
     const pagoReal=document.getElementById('mc-pago').value;
     const montoReal=getRaw('mc-monto');
-    await sUpd(`Paquetes!J${p.row}:K${p.row}`,[[montoReal,pagoReal]]);
-    p.montoReal=montoReal;p.pagoReal=pagoReal;
+    await sUpd(`Paquetes!H${p.row}:K${p.row}`,[[currentUser.name,p.hora,montoReal,pagoReal]]);
+    p.quien=currentUser.name;p.montoReal=montoReal;p.pagoReal=pagoReal;
     cerrarModalCobro();
     await cargarCaja();
     toast('Cobro registrado');
