@@ -665,7 +665,7 @@ function verMes(mes){
         <div class="usr-stat"><div class="usr-stat-label">Entregas</div><div class="usr-stat-val">${ue.length}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">Efectivo</div><div class="usr-stat-val" style="color:#15803d">₲ ${fmt(uEf)}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">Tarjeta / QR</div><div class="usr-stat-val">₲ ${fmt(uTj)}</div></div>
-        <div class="usr-stat"><div class="usr-stat-label">QR</div><div class="usr-stat-val">₲ ${fmt(uQR)}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">Transferencia</div><div class="usr-stat-val">₲ ${fmt(uQR)}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">Sus retiros</div><div class="usr-stat-val" style="color:#ef4444">₲ ${fmt(uRet)}</div></div>
       </div>
     </div>`;
@@ -673,7 +673,7 @@ function verMes(mes){
   h+='</div>';
   if(diasArr.length){
     h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Detalle por dia</div>';
-    h+='<div style="display:flex;gap:12px;margin-bottom:8px;font-size:11px;color:#9ca3af"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Efectivo</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block"></span>Tarjeta</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>QR</span></div>';
+    h+='<div style="display:flex;gap:12px;margin-bottom:8px;font-size:11px;color:#9ca3af"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Efectivo</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block"></span>Tarjeta</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>Transferencia</span></div>';
     diasArr.forEach(([fecha,v])=>{
       const total=v.ef+v.tj+v.qr;
       const wEf=Math.round((v.ef/maxTotal)*120);const wTj=Math.round((v.tj/maxTotal)*120);const wQR=Math.round((v.qr/maxTotal)*120);
@@ -710,7 +710,7 @@ function aplicarFiltro(){
     <div class="metric"><div class="metric-label">Total cobrado</div><div class="metric-val pos">₲ ${fmt(totalCob)}</div></div>
     <div class="metric"><div class="metric-label">Efectivo</div><div class="metric-val">₲ ${fmt(totalEf)}</div></div>
     <div class="metric"><div class="metric-label">Tarjeta / QR</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
-    <div class="metric"><div class="metric-label">QR</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
+    <div class="metric"><div class="metric-label">Transferencia</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
   </div>`;
   if(filtrados.length){
     h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Resultados</div><div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>F. Carga</th><th>Cliente</th><th>Pago</th><th>Monto</th><th>Entrego</th><th>F. Entrega</th></tr></thead><tbody>';
@@ -803,7 +803,7 @@ function renderCaja(){
     <div class="metric"><div class="metric-label">Efectivo cobrado hoy</div><div class="metric-val pos">₲ ${fmt(totalEfHoy)}</div></div>
     <div class="metric"><div class="metric-label">Retiros hoy</div><div class="metric-val neg">₲ ${fmt(totalRetHoy)}</div></div>
     <div class="metric"><div class="metric-label">Tarjeta hoy</div><div class="metric-val">₲ ${fmt(totalTjHoy)}</div></div>
-    <div class="metric"><div class="metric-label">QR hoy</div><div class="metric-val">₲ ${fmt(totalQRHoy)}</div></div>
+    <div class="metric"><div class="metric-label">Transferencia hoy</div><div class="metric-val">₲ ${fmt(totalQRHoy)}</div></div>
     <div class="metric"><div class="metric-label">Entregados hoy</div><div class="metric-val">${entr.length}/${paquetes.length}</div></div>
     <div class="metric"><div class="metric-label">Cobros pendientes</div><div class="metric-val">${pend}</div></div>
   </div>
