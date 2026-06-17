@@ -338,7 +338,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <select id="h-pago">
             <option value="">Todos</option>
             <option value="efectivo">Efectivo</option>
-            <option value="tarjeta">Tarjeta</option>
+            <option value="tarjeta">Tarjeta / QR</option>
             <option value="qr">QR / Transferencia</option>
             <option value="pendiente">Pendiente</option>
             <option value="prepago">Ya pagado</option>
@@ -391,8 +391,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <select id="f-pago" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('f-nota').focus()}">
           <option value="">Sin especificar</option>
           <option value="efectivo">Efectivo</option>
-          <option value="tarjeta">Tarjeta</option>
-          <option value="qr">Transferencia / QR</option>
+          <option value="tarjeta">Tarjeta / QR</option>
+          <option value="qr">Transferencia</option>
           <option value="prepago">Ya pagado</option>
           <option value="pendiente">Pendiente (paga despues)</option>
         </select>
@@ -410,8 +410,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="form-row"><label>Forma de pago recibida</label>
       <select id="m-pago">
         <option value="efectivo">Efectivo</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="qr">Transferencia / QR</option>
+        <option value="tarjeta">Tarjeta / QR</option>
+        <option value="qr">Transferencia</option>
         <option value="prepago">Ya pagado</option>
         <option value="pendiente">Pendiente (paga despues)</option>
       </select>
@@ -435,8 +435,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="form-row" style="margin-top:12px"><label>Forma de pago</label>
       <select id="mg-pago">
         <option value="efectivo">Efectivo</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="qr">Transferencia / QR</option>
+        <option value="tarjeta">Tarjeta / QR</option>
+        <option value="qr">Transferencia</option>
         <option value="prepago">Ya pagado</option>
         <option value="pendiente">Pendiente (paga despues)</option>
       </select>
@@ -455,8 +455,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="form-row"><label>Forma de pago</label>
       <select id="mc-pago">
         <option value="efectivo">Efectivo</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="qr">Transferencia / QR</option>
+        <option value="tarjeta">Tarjeta / QR</option>
+        <option value="qr">Transferencia</option>
       </select>
     </div>
     <div class="form-row"><label>Monto cobrado (₲)</label>
@@ -507,7 +507,7 @@ const SA={
   uri:'https://oauth2.googleapis.com/token'
 };
 const USERS=[{id:'alcides',name:'Alcides',role:'local'},{id:'joseph',name:'Joseph',role:'local'},{id:'ingrid',name:'Ingrid',role:'ext'},{id:'camila',name:'Camila',role:'ext'}];
-const PL={efectivo:'Efectivo',tarjeta:'Tarjeta',qr:'QR/Transfer.',prepago:'Ya pagado',pendiente:'Pendiente'};
+const PL={efectivo:'Efectivo',tarjeta:'Tarjeta',qr:'Transferencia',prepago:'Ya pagado',pendiente:'Pendiente'};
 const PC={efectivo:'p-efectivo',tarjeta:'p-tarjeta',qr:'p-qr',prepago:'p-prepago',pendiente:'p-pendiente'};
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -645,8 +645,8 @@ function verMes(mes){
   </div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Efectivo cobrado</div><div class="metric-val pos">₲ ${fmt(totalEf)}</div></div>
-    <div class="metric"><div class="metric-label">Tarjeta</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
-    <div class="metric"><div class="metric-label">QR / Transfer.</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
+    <div class="metric"><div class="metric-label">Tarjeta / QR</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
+    <div class="metric"><div class="metric-label">Transferencia</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
     <div class="metric"><div class="metric-label">Pendientes cobro</div><div class="metric-val">₲ ${fmt(totalPend)}</div></div>
     <div class="metric"><div class="metric-label">Total retirado</div><div class="metric-val neg">₲ ${fmt(totalRet)}</div></div>
     <div class="metric"><div class="metric-label">Entregas</div><div class="metric-val">${entregados.length}</div></div>
@@ -664,7 +664,7 @@ function verMes(mes){
       <div class="usr-stats">
         <div class="usr-stat"><div class="usr-stat-label">Entregas</div><div class="usr-stat-val">${ue.length}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">Efectivo</div><div class="usr-stat-val" style="color:#15803d">₲ ${fmt(uEf)}</div></div>
-        <div class="usr-stat"><div class="usr-stat-label">Tarjeta</div><div class="usr-stat-val">₲ ${fmt(uTj)}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">Tarjeta / QR</div><div class="usr-stat-val">₲ ${fmt(uTj)}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">QR</div><div class="usr-stat-val">₲ ${fmt(uQR)}</div></div>
         <div class="usr-stat"><div class="usr-stat-label">Sus retiros</div><div class="usr-stat-val" style="color:#ef4444">₲ ${fmt(uRet)}</div></div>
       </div>
@@ -709,7 +709,7 @@ function aplicarFiltro(){
     <div class="metric"><div class="metric-label">Registros encontrados</div><div class="metric-val">${filtrados.length}</div></div>
     <div class="metric"><div class="metric-label">Total cobrado</div><div class="metric-val pos">₲ ${fmt(totalCob)}</div></div>
     <div class="metric"><div class="metric-label">Efectivo</div><div class="metric-val">₲ ${fmt(totalEf)}</div></div>
-    <div class="metric"><div class="metric-label">Tarjeta</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
+    <div class="metric"><div class="metric-label">Tarjeta / QR</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
     <div class="metric"><div class="metric-label">QR</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
   </div>`;
   if(filtrados.length){
