@@ -822,7 +822,7 @@ function renderCaja(){
         <span class="pendiente-fecha">${p.fecha===hoy()?'Hoy':p.fecha}</span>
         <span class="pendiente-name">${p.cliente}</span>
         <span class="pendiente-monto">${p.montoReal>0?'₲ '+fmt(p.montoReal):'S/monto'}</span>
-        ${currentUser.role==='local'?`<button class="cobrar-btn" onclick="abrirModalCobro('${p.id}')">Cobrar</button>`:''}
+        ${(currentUser.role==='local'||currentUser.id==='ingrid')?`<button class="cobrar-btn" onclick="abrirModalCobro('${p.id}')">Cobrar</button>`:''}
       </div>`;
     });
     h+='</div>';
