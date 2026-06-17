@@ -556,15 +556,18 @@ async function init(){
 }
 
 async function cargarTodos(){
-  const [dp,dr,dc]=await Promise.all([sGet('Paquetes!A2:N5000'),sGet('Retiros!A2:F5000'),sGet('Caja!A1:B1000')]);
-  // Read saldo inicial and control caja from Caja sheet
-  const cajaRows=dc.values||[];
+  const [dp,dr]=await Promise.all([sGet('Paquetes!A2:N5000'),sGet('Retiros!A2:F5000')]);
+  // Read saldo inicial and control caja from Caja sheet separately with error handling
   saldoInicial=0;
   controlCajaData=[];
-  cajaRows.forEach(r=>{
-    if(r[0]==='SaldoInicial')saldoInicial=Number(r[1]||0);
-    else if(r[0]&&r[0].length===10&&r[0].match(/^\d{4}-\d{2}-\d{2}$/))controlCajaData.push({fecha:r[0],real:Number(r[1]||0)});
-  });
+  try{
+    const dc=await sGet('Caja!A1:B1000');
+    const cajaRows=dc.values||[];
+    cajaRows.forEach(r=>{
+      if(r[0]==='SaldoInicial')saldoInicial=Number(r[1]||0);
+      else if(r[0]&&r[0].length===10)controlCajaData.push({fecha:r[0],real:Number(r[1]||0)});
+    });
+  }catch(e){console.log('Caja sheet not ready yet');}
   todosLosPaquetes=(dp.values||[]).map((r,i)=>({id:r[0],fecha:r[1],cliente:r[2],monto:Number(r[3]||0),pago:r[4],nota:r[5],estado:r[6]||'pendiente',quien:r[7],hora:r[8],montoReal:Number(r[9]||0),pagoReal:r[10],cargadoPor:r[11],estadoMerc:r[12]||'proceso',cantidad:Number(r[13]||1),row:i+2}));
   todosLosRetiros=(dr.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
   paquetes=todosLosPaquetes.filter(p=>p.estado==='pendiente'||p.fecha===hoy());
