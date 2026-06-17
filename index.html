@@ -238,6 +238,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .qty-btn:hover{background:#e5e7eb}
 .qty-btn:active{background:#d1d5db}
 .qty-val{min-width:40px;text-align:center;font-size:16px;font-weight:600;color:#1a1a2e;padding:0 8px;border-left:1px solid #d1d5db;border-right:1px solid #d1d5db;height:38px;display:flex;align-items:center;justify-content:center}
+
+.ctrl-caja-box{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.ctrl-caja-title{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.ctrl-diff-pos{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.ctrl-diff-neg{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.ctrl-diff-zero{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.ctrl-diff-label{font-size:13px;color:#374151;font-weight:500}
+.ctrl-diff-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.ctrl-diff-val{font-size:22px;font-weight:700}
+.ctrl-diff-val.pos{color:#15803d}
+.ctrl-diff-val.neg{color:#ef4444}
+.ctrl-diff-val.zero{color:#6b7280}
+.ctrl-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.ctrl-row .form-row{flex:1;min-width:140px;margin-bottom:0}
+.ctrl-save-btn{padding:10px 18px;font-size:13px;border-radius:8px;border:none;background:#4f46e5;color:#fff;cursor:pointer;font-weight:500;white-space:nowrap;align-self:flex-end}
+.ctrl-save-btn:hover{background:#4338ca}
+.ctrl-save-btn:disabled{background:#a5b4fc;cursor:not-allowed}
+.ctrl-hist-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f3f4f6;font-size:13px;flex-wrap:wrap}
+.ctrl-hist-row:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -472,6 +491,9 @@ function displayHora(fh){
 
 let guardando=false;
 
+let saldoInicial=0;
+let controlCajaData=[];
+
 function getRaw(id){
   const el=document.getElementById(id);
   if(!el.value||el.value.trim()==='')return 0;
@@ -527,11 +549,22 @@ async function init(){
     if(!hp.values)await sApp('Paquetes!A1',[['ID','Fecha','Cliente','Monto','PagoEsperado','Nota','Estado','QuienEntrego','HoraEntrega','MontoReal','PagoReal','CargadoPor']]);
     const hr=await sGet('Retiros!A1:A1');
     if(!hr.values)await sApp('Retiros!A1',[['ID','Fecha','Hora','Monto','Motivo','Usuario']]);
+    // Init Caja sheet with SaldoInicial if empty
+    const hc=await sGet('Caja!A1:B1');
+    if(!hc.values||!hc.values.length)await sApp('Caja!A1',[['SaldoInicial',3361000]]);
   }catch(e){console.error(e);}
 }
 
 async function cargarTodos(){
-  const [dp,dr]=await Promise.all([sGet('Paquetes!A2:N5000'),sGet('Retiros!A2:F5000')]);
+  const [dp,dr,dc]=await Promise.all([sGet('Paquetes!A2:N5000'),sGet('Retiros!A2:F5000'),sGet('Caja!A1:B1000')]);
+  // Read saldo inicial and control caja from Caja sheet
+  const cajaRows=dc.values||[];
+  saldoInicial=0;
+  controlCajaData=[];
+  cajaRows.forEach(r=>{
+    if(r[0]==='SaldoInicial')saldoInicial=Number(r[1]||0);
+    else if(r[0]&&r[0].length===10&&r[0].match(/^\d{4}-\d{2}-\d{2}$/))controlCajaData.push({fecha:r[0],real:Number(r[1]||0)});
+  });
   todosLosPaquetes=(dp.values||[]).map((r,i)=>({id:r[0],fecha:r[1],cliente:r[2],monto:Number(r[3]||0),pago:r[4],nota:r[5],estado:r[6]||'pendiente',quien:r[7],hora:r[8],montoReal:Number(r[9]||0),pagoReal:r[10],cargadoPor:r[11],estadoMerc:r[12]||'proceso',cantidad:Number(r[13]||1),row:i+2}));
   todosLosRetiros=(dr.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
   paquetes=todosLosPaquetes.filter(p=>p.estado==='pendiente'||p.fecha===hoy());
@@ -753,7 +786,7 @@ function renderCaja(){
   const pend=entr.filter(p=>p.pagoReal==='pendiente').length;
   const totalEfAcum=todosLosPaquetes.filter(p=>p.estado==='entregado'&&p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
   const totalRetAcum=todosLosRetiros.reduce((a,r)=>a+r.monto,0);
-  const saldoAcum=totalEfAcum-totalRetAcum;
+  const saldoAcum=saldoInicial+totalEfAcum-totalRetAcum;
   let h=`<div class="${saldoAcum<0?'saldo-box neg':'saldo-box'}">
     <div>
       <div class="saldo-label">Efectivo en caja (saldo acumulado)</div>
@@ -793,6 +826,33 @@ function renderCaja(){
       </div>`;
     });
     h+='</div>';
+  }
+  // Control de caja - only show for joseph and alcides
+  if(currentUser.id==='joseph'||currentUser.id==='alcides'){
+    const hoyCtrl=controlCajaData.find(c=>c.fecha===hoy());
+    const realHoy=hoyCtrl?hoyCtrl.real:null;
+    const diff=realHoy!==null?realHoy-saldoAcum:null;
+    const diffClass=diff===null?'zero':diff>0?'pos':diff<0?'neg':'zero';
+    const diffBox=diff===null?'ctrl-diff-zero':diff>0?'ctrl-diff-pos':diff<0?'ctrl-diff-neg':'ctrl-diff-zero';
+    h+=`<div class="ctrl-caja-box">
+      <div class="ctrl-caja-title">Control de caja efectivo</div>
+      <div class="ctrl-row">
+        <div class="form-row"><label>Efectivo contado hoy (₲)</label>
+          <input type="text" id="ctrl-monto" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this)" ${realHoy!==null?`value="₲ ${fmt(realHoy)}" data-raw="${realHoy}"`:''}>
+        </div>
+        <button class="ctrl-save-btn" id="btn-ctrl-save" onclick="guardarControlCaja()">Guardar</button>
+      </div>
+      <div class="ctrl-row" style="margin-top:10px;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:2px">Saldo inicial</div><div style="font-size:14px;font-weight:600;color:#1a1a2e">₲ ${fmt(saldoInicial)}</div></div>
+        <div><div style="font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:2px">Deberia haber</div><div style="font-size:14px;font-weight:600;color:#1a1a2e">₲ ${fmt(saldoAcum)}</div></div>
+        ${realHoy!==null?`<div><div style="font-size:11px;color:#9ca3af;font-weight:500;margin-bottom:2px">Contado hoy</div><div style="font-size:14px;font-weight:600;color:#1a1a2e">₲ ${fmt(realHoy)}</div></div>`:''}
+      </div>
+      ${realHoy!==null?`<div class="${diffBox}">
+        <div><div class="ctrl-diff-label">${diff===0?'Caja cuadrada':'Diferencia'}</div><div class="ctrl-diff-sub">${diff>0?'Hay mas efectivo del esperado':diff<0?'Falta efectivo':'Todo coincide'}</div></div>
+        <div class="ctrl-diff-val ${diffClass}">${diff===0?'✓':diff>0?'+₲ '+fmt(diff):'-₲ '+fmt(Math.abs(diff))}</div>
+      </div>`:'<div style="font-size:12px;color:#9ca3af;margin-top:8px">Ingresa el efectivo contado para ver la diferencia</div>'}
+      ${controlCajaData.length>1?`<div style="margin-top:14px"><div style="font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Historial de controles</div>${[...controlCajaData].reverse().slice(0,5).map(c=>{const d=c.real-(saldoInicial+todosLosPaquetes.filter(p=>p.estado==='entregado'&&p.pagoReal==='efectivo'&&p.hora<=c.fecha+' 23:59').reduce((a,p)=>a+p.montoReal,0)-todosLosRetiros.filter(r=>r.fecha<=c.fecha).reduce((a,r)=>a+r.monto,0));return \`<div class="ctrl-hist-row"><span style="min-width:80px;color:#6b7280;font-size:12px">\${c.fecha}</span><span style="flex:1;font-weight:500">₲ \${fmt(c.real)}</span><span style="font-size:12px;font-weight:600;color:\${d>=0?'#15803d':'#ef4444'}">\${d>=0?'+':''}\${fmt(d)}</span></div>\`;}).join('')}</div>`:''}
+    </div>`;
   }
   h+=`</div><div class="subtotales">
     <div class="metric"><div class="metric-label">Efectivo total historico</div><div class="metric-val" style="font-size:15px">₲ ${fmt(totalEfAcum)}</div></div>
@@ -1152,6 +1212,54 @@ function cambiarCantidad(delta){
   input.value=val;
   display.textContent=val;
   label.textContent=val===1?'paquete':'paquetes';
+}
+
+async function guardarControlCaja(){
+  const monto=getRaw('ctrl-monto');
+  if(!monto&&monto!==0){toast('Ingresa el monto contado');return;}
+  const btn=document.getElementById('btn-ctrl-save');
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    // Check if today already exists in Caja sheet
+    const data=await sGet('Caja!A1:B1000');
+    const rows=data.values||[];
+    let found=false;
+    for(let i=0;i<rows.length;i++){
+      if(rows[i][0]===hoy()){
+        await sUpd(`Caja!B${i+1}`,[[monto]]);
+        found=true;break;
+      }
+    }
+    if(!found)await sApp('Caja!A1',[[hoy(),monto]]);
+    // Update local data
+    const idx=controlCajaData.findIndex(c=>c.fecha===hoy());
+    if(idx>=0)controlCajaData[idx].real=monto;
+    else controlCajaData.push({fecha:hoy(),real:monto});
+    toast('Control de caja guardado');
+    renderCaja();
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Guardar';
+}
+
+async function guardarSaldoInicial(){
+  const monto=getRaw('ctrl-saldo-inicial');
+  if(!monto&&monto!==0){toast('Ingresa el saldo inicial');return;}
+  const btn=document.getElementById('btn-saldo-save');
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    const data=await sGet('Caja!A1:B1');
+    const rows=data.values||[];
+    if(rows.length&&rows[0][0]==='SaldoInicial'){
+      await sUpd('Caja!B1',[[monto]]);
+    }else{
+      // Prepend - need to insert row
+      await sApp('Caja!A1',[['SaldoInicial',monto]]);
+    }
+    saldoInicial=monto;
+    toast('Saldo inicial guardado');
+    renderCaja();
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Guardar';
 }
 
 function buildBar(){
