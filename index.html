@@ -566,7 +566,7 @@ async function cargarTodos(){
     const dc=await sGet('Caja!A1:B1000');
     const cajaRows=dc.values||[];
     cajaRows.forEach(r=>{
-      if(r[0]==='SaldoInicial')saldoInicial=Number(r[1]||0);
+      if(r[0]==='SaldoInicial'||r[0]==='Saldo inicial'||r[0].toLowerCase()==='saldo inicial')saldoInicial=Number(r[1]||0);
       else if(r[0]&&r[0].length===10)controlCajaData.push({fecha:r[0],real:Number(r[1]||0)});
     });
   }catch(e){console.log('Caja sheet not ready yet');}
