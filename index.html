@@ -572,7 +572,7 @@ async function cargarTodos(){
   }catch(e){console.log('Caja sheet not ready yet');}
   todosLosPaquetes=(dp.values||[]).map((r,i)=>({id:r[0],fecha:r[1],cliente:r[2],monto:Number(r[3]||0),pago:r[4],nota:r[5],estado:r[6]||'pendiente',quien:r[7],hora:r[8],montoReal:Number(r[9]||0),pagoReal:r[10],cargadoPor:r[11],estadoMerc:r[12]||'proceso',cantidad:Number(r[13]||1),row:i+2}));
   todosLosRetiros=(dr.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
-  paquetes=todosLosPaquetes.filter(p=>p.estado==='pendiente'||(p.estado==='entregado'&&(p.hora||'').slice(0,10)===hoy())||(p.estado==='devuelta'&&(p.hora||'').slice(0,10)===hoy())||p.fecha===hoy());
+  paquetes=todosLosPaquetes.filter(p=>p.estado==='pendiente'||(p.estado==='devuelta'&&(p.hora||'').slice(0,10)===hoy()));
   retiros=todosLosRetiros.filter(r=>r.fecha===hoy());
 }
 
@@ -765,11 +765,6 @@ function renderPaquetes(){
         </div>`;
       }
     });
-    h+='</div>';
-  }
-  if(entr.length){
-    h+=`<div class="card"><div class="sec-title">Entregados hoy (${entr.length})</div>`;
-    entr.forEach(p=>{h+=`<div class="paq-row"><div class="paq-info"><div class="paq-name">${p.cliente} <span class="badge badge-done">Entregado</span></div><div class="paq-sub">${p.montoReal>0?'₲ '+fmt(p.montoReal):'Sin cobro'} &nbsp;<span class="pbadge ${PC[p.pagoReal||'prepago']}">${PL[p.pagoReal||'prepago']}</span> &middot; ${p.hora} &middot; ${p.quien}</div></div></div>`;});
     h+='</div>';
   }
   if(dev.length){
