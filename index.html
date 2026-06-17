@@ -339,7 +339,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <option value="">Todos</option>
             <option value="efectivo">Efectivo</option>
             <option value="tarjeta">Tarjeta / QR</option>
-            <option value="qr">QR / Transferencia</option>
+            <option value="qr">Transferencia</option>
             <option value="pendiente">Pendiente</option>
             <option value="prepago">Ya pagado</option>
           </select>
@@ -713,9 +713,9 @@ function aplicarFiltro(){
     <div class="metric"><div class="metric-label">QR</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
   </div>`;
   if(filtrados.length){
-    h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Resultados</div><div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Pago</th><th>Monto</th><th>Entrego</th><th>Hora entrega</th></tr></thead><tbody>';
+    h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Resultados</div><div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>F. Carga</th><th>Cliente</th><th>Pago</th><th>Monto</th><th>Entrego</th><th>F. Entrega</th></tr></thead><tbody>';
     filtrados.forEach(p=>{
-      h+=`<tr><td>${p.fecha}</td><td>${p.cliente}</td><td><span class="pbadge ${PC[p.pagoReal||'prepago']}">${PL[p.pagoReal||'prepago']}</span></td><td style="font-weight:600">${p.montoReal>0?'₲ '+fmt(p.montoReal):'-'}</td><td>${p.quien||'-'}</td><td>${displayHora(p.hora)}</td></tr>`;
+      h+=`<tr><td>${p.fecha}</td><td>${p.cliente}</td><td><span class="pbadge ${PC[p.pagoReal||'prepago']}">${PL[p.pagoReal||'prepago']}</span></td><td style="font-weight:600">${p.montoReal>0?'₲ '+fmt(p.montoReal):'-'}</td><td>${p.quien||'-'}</td><td>${p.hora||"-"}</td></tr>`;
     });
     h+='</tbody></table></div></div>';
   }else{
