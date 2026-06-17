@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Control de Entregas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;min-height:100vh}
+.topbar{background:#1a1a2e;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px}
+.topbar-title{color:#fff;font-size:16px;font-weight:600}
+.user-sel{display:flex;gap:6px;flex-wrap:wrap}
+.usr-btn{font-size:12px;padding:5px 13px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);background:transparent;cursor:pointer;color:rgba(255,255,255,0.6);transition:all .15s}
+.usr-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+.usr-btn.active-local{background:#22c55e;color:#fff;border-color:#22c55e}
+.usr-btn.active-ext{background:#818cf8;color:#fff;border-color:#818cf8}
+.nav{background:#fff;border-bottom:1px solid #e5e7eb;display:flex;padding:0 16px;overflow-x:auto;position:sticky;top:52px;z-index:99}
+.nav-btn{padding:12px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:#6b7280;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s}
+.nav-btn:hover{color:#1a1a2e}
+.nav-btn.active{color:#4f46e5;border-bottom-color:#4f46e5;font-weight:500}
+.content{max-width:900px;margin:0 auto;padding:16px}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:12px}
+.sec-title{font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+.form-row{margin-bottom:12px}
+.form-row label{font-size:12px;color:#6b7280;display:block;margin-bottom:5px;font-weight:500}
+.form-row input,.form-row select{width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1a1a2e;background:#fff;outline:none;transition:border .15s;font-family:inherit}
+.form-row input:focus,.form-row select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.btn-primary{background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:6px;transition:background .15s}
+.btn-primary:hover{background:#4338ca}
+.btn-primary:disabled{background:#a5b4fc;cursor:not-allowed}
+.btn-danger{background:#ef4444;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer;font-weight:500;width:100%;margin-top:6px}
+.btn-danger:hover{background:#dc2626}
+.btn-danger:disabled{background:#fca5a5;cursor:not-allowed}
+.paq-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f3f4f6;gap:10px}
+.paq-row:last-child{border-bottom:none}
+.paq-info{flex:1;min-width:0}
+.paq-name{font-size:14px;font-weight:500;color:#1a1a2e}
+.paq-sub{font-size:12px;color:#6b7280;margin-top:3px;line-height:1.6}
+.paq-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.act-btn{font-size:12px;padding:5px 11px;border-radius:7px;border:1px solid;cursor:pointer;font-weight:500}
+.act-btn.entregar{background:#f0fdf4;color:#15803d;border-color:#86efac}
+.act-btn.devolver{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.badge-done{background:#f0fdf4;color:#15803d}
+.badge-devuelta{background:#fff7ed;color:#c2410c}
+.pbadge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.p-efectivo{background:#f0fdf4;color:#15803d}
+.p-tarjeta{background:#eff6ff;color:#1d4ed8}
+.p-qr{background:#f5f3ff;color:#6d28d9}
+.p-prepago{background:#f9fafb;color:#374151;border:1px solid #e5e7eb}
+.p-pendiente{background:#fffbeb;color:#b45309}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.metric{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px}
+.metric-label{font-size:11px;color:#9ca3af;margin-bottom:4px;font-weight:500}
+.metric-val{font-size:20px;font-weight:600;color:#1a1a2e}
+.metric-val.neg{color:#ef4444}
+.metric-val.pos{color:#15803d}
+.caja-row{display:flex;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid #f3f4f6;gap:8px;flex-wrap:wrap}
+.caja-row:last-child{border-bottom:none}
+.caja-row.retiro-row{background:#fff7ed;border-radius:6px;padding:7px 8px;margin:2px 0;border:1px solid #fed7aa}
+.caja-time{color:#9ca3af;font-size:12px;min-width:44px;font-weight:500}
+.caja-name{flex:1;color:#1a1a2e;min-width:80px;font-weight:500}
+.caja-monto{font-weight:600;min-width:90px;text-align:right}
+.caja-monto.cobro{color:#15803d}
+.caja-monto.retiro{color:#ef4444}
+.quien{font-size:11px;color:#9ca3af;min-width:55px;text-align:right}
+.subtotales{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.empty{text-align:center;padding:36px 0;color:#9ca3af;font-size:14px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:flex-end;justify-content:center;padding:0}
+@media(min-width:641px){.modal-overlay{align-items:center;padding:20px}}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px 14px 0 0;padding:20px 20px 32px;width:100%;max-width:100%}
+@media(min-width:641px){.modal{border-radius:14px;padding:22px;max-width:340px}}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:16px;color:#1a1a2e}
+.modal-btns{display:flex;gap:8px;margin-top:14px}
+.btn-sec{flex:1;padding:9px;font-size:13px;cursor:pointer;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-weight:500}
+.btn-sec:hover{background:#f9fafb}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.loading{text-align:center;padding:28px 0;color:#9ca3af;font-size:13px}
+.role-ext{font-size:10px;padding:1px 6px;border-radius:10px;background:#ede9fe;color:#6d28d9;margin-left:4px;font-weight:500}
+.role-local{font-size:10px;padding:1px 6px;border-radius:10px;background:#dcfce7;color:#15803d;margin-left:4px;font-weight:500}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.refresh-btn{font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;color:#6b7280}
+.refresh-btn:hover{background:#f9fafb}
+.retiro-badge{font-size:11px;padding:2px 8px;border-radius:20px;background:#fff7ed;color:#c2410c;font-weight:500;border:1px solid #fed7aa}
+.saldo-box{background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.saldo-box.neg{background:#fff7ed;border-color:#fed7aa}
+.saldo-label{font-size:13px;color:#374151;font-weight:500}
+.saldo-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.saldo-val{font-size:26px;font-weight:700;color:#15803d}
+.saldo-val.neg{color:#ef4444}
+.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end}
+.filtros .form-row{margin-bottom:0;flex:1;min-width:120px}
+.filtros .btn-filter{padding:9px 16px;font-size:13px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;color:#374151;white-space:nowrap;align-self:flex-end}
+.filtros .btn-filter:hover{background:#f9fafb}
+.hist-table{width:100%;border-collapse:collapse;font-size:13px}
+.hist-table th{text-align:left;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px;padding:6px 8px;border-bottom:2px solid #f3f4f6}
+.hist-table td{padding:8px 8px;border-bottom:1px solid #f3f4f6;color:#1a1a2e;vertical-align:middle}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table tr:hover td{background:#fafafa}
+.mes-header{background:#f9fafb;font-weight:600;font-size:13px;color:#374151;padding:10px 8px;border-radius:6px;margin:12px 0 4px;display:flex;justify-content:space-between;align-items:center}
+.usr-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:8px}
+.usr-card-name{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.usr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
+.usr-stat{background:#fff;border-radius:8px;padding:10px 12px;border:1px solid #e5e7eb}
+.usr-stat-label{font-size:11px;color:#9ca3af;margin-bottom:3px}
+.usr-stat-val{font-size:16px;font-weight:600;color:#1a1a2e}
+.month-picker{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.month-btn{padding:6px 14px;font-size:12px;border-radius:20px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;color:#6b7280;transition:all .15s}
+.month-btn:hover{border-color:#4f46e5;color:#4f46e5}
+.month-btn.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.resumen-mes{background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:12px;padding:18px;color:#fff;margin-bottom:14px}
+.resumen-mes-title{font-size:13px;opacity:.8;margin-bottom:4px}
+.resumen-mes-val{font-size:28px;font-weight:700}
+.resumen-mes-sub{font-size:12px;opacity:.7;margin-top:4px}
+.day-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;gap:8px;font-size:13px}
+.day-row:last-child{border-bottom:none}
+.day-fecha{min-width:80px;color:#6b7280;font-size:12px}
+.day-paq{min-width:30px;text-align:center;font-weight:500}
+.day-bars{flex:1;display:flex;gap:4px;align-items:center}
+.day-bar{height:8px;border-radius:4px;min-width:2px}
+.bar-ef{background:#22c55e}
+.bar-tj{background:#3b82f6}
+.bar-qr{background:#8b5cf6}
+.day-total{min-width:90px;text-align:right;font-weight:600;color:#1a1a2e}
+
+.login-overlay{position:fixed;inset:0;background:#1a1a2e;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border-radius:16px;padding:32px 28px;width:100%;max-width:340px;text-align:center}
+.login-logo{font-size:32px;margin-bottom:8px}
+.login-title{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:4px}
+.login-sub{font-size:13px;color:#9ca3af;margin-bottom:24px}
+.login-box .form-row{text-align:left;margin-bottom:14px}
+.login-box .form-row label{font-size:13px;color:#374151;font-weight:500;display:block;margin-bottom:6px}
+.login-box .form-row select,.login-box .form-row input{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none}
+.login-box .form-row select:focus,.login-box .form-row input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.login-btn{background:#4f46e5;color:#fff;border:none;border-radius:8px;padding:11px 18px;font-size:14px;cursor:pointer;font-weight:600;width:100%;transition:background .15s}
+.login-btn:hover{background:#4338ca}
+.login-error{color:#ef4444;font-size:13px;margin-top:10px;min-height:18px}
+.logout-btn{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,0.3);background:transparent;cursor:pointer;color:rgba(255,255,255,0.7);margin-left:8px}
+.logout-btn:hover{background:rgba(255,255,255,0.1);color:#fff}
+
+.paq-check-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;cursor:pointer}
+.paq-check-row:last-child{border-bottom:none}
+.paq-check-row input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:#4f46e5}
+.paq-check-label{flex:1;font-size:13px;color:#1a1a2e}
+.paq-check-monto{font-size:13px;font-weight:600;color:#1a1a2e}
+
+.autocomplete-wrap{position:relative}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:50;max-height:200px;overflow-y:auto;margin-top:2px}
+.autocomplete-item{padding:9px 12px;font-size:14px;cursor:pointer;color:#1a1a2e;border-bottom:1px solid #f3f4f6}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover,.autocomplete-item.selected{background:#f5f3ff;color:#4f46e5}
+.autocomplete-item strong{color:#4f46e5}
+
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.search-bar input{flex:1;padding:9px 12px 9px 36px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239ca3af' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;transition:border .15s}
+.search-bar input:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+.search-clear{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;color:#6b7280;white-space:nowrap}
+.search-clear:hover{background:#f9fafb}
+.highlight{background:#fef08a;border-radius:2px;padding:0 1px}
+
+@media (max-width: 640px) {
+  .topbar{padding:10px 14px}
+  .topbar-title{font-size:15px}
+  .usr-btn{font-size:11px;padding:4px 9px}
+  .logout-btn{font-size:11px;padding:3px 8px}
+  .nav{padding:0 4px;top:48px}
+  .nav-btn{padding:12px 10px;font-size:12px}
+  .content{padding:10px 8px;padding-bottom:20px}
+  .card{padding:12px 12px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .metric-val{font-size:17px}
+  .paq-row{flex-direction:column;gap:8px}
+  .paq-actions{display:flex;gap:6px;width:100%}
+  .act-btn{flex:1;text-align:center;justify-content:center;padding:9px 6px;font-size:13px}
+  .paq-name{font-size:15px}
+  .paq-sub{font-size:13px}
+  .saldo-box{flex-direction:column;gap:6px;text-align:center}
+  .saldo-val{font-size:22px}
+  .subtotales{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .caja-row{font-size:12px;gap:5px}
+  .caja-monto{min-width:70px;font-size:12px}
+  .modal{padding:16px;margin:0 4px}
+  .modal h3{font-size:15px}
+  .form-row input,.form-row select{font-size:16px;padding:10px 12px}
+  .btn-primary,.btn-danger{padding:12px;font-size:15px}
+  .search-bar input{font-size:16px;padding:10px 12px 10px 36px}
+  .hist-table{font-size:11px}
+  .hist-table th,.hist-table td{padding:5px 4px}
+  .filtros{flex-direction:column}
+  .filtros .form-row{min-width:100%}
+  .month-btn{font-size:11px;padding:5px 10px}
+  .resumen-mes-val{font-size:22px}
+  .usr-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .section-header{flex-wrap:wrap;gap:6px}
+  .paq-check-row{padding:10px 0}
+  .paq-check-row input[type=checkbox]{width:22px;height:22px}
+  .autocomplete-item{padding:12px}
+  .day-row{flex-wrap:wrap;gap:4px}
+  .day-bars{min-width:100%;order:3}
+}
+@media (max-width: 380px) {
+  .nav-btn{padding:11px 7px;font-size:11px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.paq-grupo{flex-direction:column;align-items:stretch;gap:8px}
+.paq-grupo-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;width:100%}
+.paq-grupo-btns{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.paq-grupo-btns .act-btn{white-space:nowrap}
+.parcial-btn{background:#f0f9ff;color:#0369a1;border-color:#7dd3fc}
+.multi-badge{font-size:12px;background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.paq-grupo-items{padding-left:12px;border-left:3px solid #e5e7eb;width:100%}
+.paq-grupo-item{font-size:12px;color:#6b7280;padding:4px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.item-num{color:#1a1a2e;font-weight:600;min-width:24px}
+.item-monto{color:#1a1a2e;font-weight:500}
+.item-nota{color:#9ca3af}
+@media(max-width:640px){
+  .paq-grupo-header{flex-direction:column;gap:8px}
+  .paq-grupo-btns{width:100%;justify-content:stretch}
+  .paq-grupo-btns .act-btn{flex:1;text-align:center;justify-content:center;padding:10px 6px;font-size:13px}
+  .multi-badge{font-size:11px}
+  .paq-grupo-items{padding-left:8px}
+}
+
+.cobrar-btn{font-size:12px;padding:5px 11px;border-radius:7px;border:1px solid #fbbf24;background:#fffbeb;color:#b45309;cursor:pointer;font-weight:500;white-space:nowrap}
+.cobrar-btn:hover{background:#fef3c7}
+.pendiente-row{background:#fffbeb;border-radius:8px;padding:10px 12px;margin:4px 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid #fde68a}
+.pendiente-fecha{font-size:11px;color:#9ca3af;min-width:60px}
+.pendiente-name{flex:1;font-size:13px;font-weight:500;color:#1a1a2e;min-width:80px}
+.pendiente-monto{font-size:13px;font-weight:600;color:#b45309;min-width:70px;text-align:right}
+
+.qty-selector{display:flex;align-items:center;gap:0;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;width:fit-content}
+.qty-btn{width:38px;height:38px;border:none;background:#f9fafb;cursor:pointer;font-size:18px;font-weight:500;color:#374151;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.qty-btn:hover{background:#e5e7eb}
+.qty-btn:active{background:#d1d5db}
+.qty-val{min-width:40px;text-align:center;font-size:16px;font-weight:600;color:#1a1a2e;padding:0 8px;border-left:1px solid #d1d5db;border-right:1px solid #d1d5db;height:38px;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">📦</div>
+    <div class="login-title">Control de Entregas</div>
+    <div class="login-sub">Ingresa tus credenciales para continuar</div>
+    <div class="form-row">
+      <label>Usuario</label>
+      <select id="login-user">
+        <option value="">Seleccionar...</option>
+        <option value="alcides">Alcides</option>
+        <option value="joseph">Joseph</option>
+        <option value="ingrid">Ingrid</option>
+        <option value="camila">Camila</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<div class="topbar">
+  <div class="topbar-title">Control de Entregas</div>
+  <div style="display:flex;align-items:center"><div class="user-sel" id="user-sel"></div><button class="logout-btn" onclick="doLogout()">Salir</button></div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="setTab('paquetes')" id="tab-paquetes">Paquetes</button>
+  <button class="nav-btn" onclick="setTab('caja')" id="tab-caja">Caja</button>
+  <button class="nav-btn" onclick="setTab('retiros')" id="tab-retiros">Retiros</button>
+  <button class="nav-btn" onclick="setTab('historial')" id="tab-historial">Historial</button>
+  <button class="nav-btn" onclick="setTab('stock')" id="tab-stock">Stock</button>
+  <button class="nav-btn" id="tab-cargar-btn" onclick="setTab('cargar')" style="display:none">+ Cargar</button>
+</div>
+
+<div class="content">
+
+  <div class="panel active" id="panel-paquetes">
+  <div class="search-bar">
+    <input type="text" id="search-cliente" placeholder="Buscar cliente..." oninput="filtrarPaquetes(this.value)" onkeydown="if(event.key==='Escape'){this.value='';filtrarPaquetes('')}">
+    <button class="search-clear" onclick="document.getElementById('search-cliente').value='';filtrarPaquetes('')">Limpiar</button>
+  </div>
+  <div id="paquetes-content"></div>
+</div>
+
+  <div class="panel" id="panel-caja"></div>
+
+  <div class="panel" id="panel-retiros">
+    <div class="card" id="retiro-form-card">
+      <div class="sec-title">Registrar retiro de efectivo</div>
+      <div class="form-row"><label>Monto retirado (₲)</label><input type="text" id="r-monto" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('f-pago').focus()}"></div>
+      <div class="form-row"><label>Motivo (opcional)</label><input type="text" id="r-motivo" placeholder="Ej: Pago proveedor, gastos..."></div>
+      <button class="btn-danger" id="btn-retirar" onclick="registrarRetiro()">Registrar retiro</button>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        <div class="sec-title">Retiros de hoy</div>
+        <button class="refresh-btn" onclick="cargarRetiros()">Actualizar</button>
+      </div>
+      <div id="retiros-lista"><div class="loading">Cargando...</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-historial">
+    <div class="card">
+      <div class="sec-title" style="margin-bottom:14px">Filtrar historial</div>
+      <div class="filtros">
+        <div class="form-row"><label>Desde</label><input type="date" id="h-desde"></div>
+        <div class="form-row"><label>Hasta</label><input type="date" id="h-hasta"></div>
+        <div class="form-row"><label>Medio de pago</label>
+          <select id="h-pago">
+            <option value="">Todos</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="qr">QR / Transferencia</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="prepago">Ya pagado</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Usuario</label>
+          <select id="h-usuario">
+            <option value="">Todos</option>
+            <option value="Alcides">Alcides</option>
+            <option value="Joseph">Joseph</option>
+          </select>
+        </div>
+        <button class="btn-filter" onclick="aplicarFiltro()">Buscar</button>
+      </div>
+    </div>
+    <div id="historial-resultado"></div>
+    <div class="card" style="margin-top:4px">
+      <div class="sec-title" style="margin-bottom:14px">Resumen por mes</div>
+      <div class="month-picker" id="month-picker"></div>
+      <div id="resumen-mes-contenido"><div class="loading">Selecciona un mes</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-stock"></div>
+
+  <div class="panel" id="panel-cargar">
+    <div class="card">
+      <div class="sec-title">Nuevo paquete</div>
+      <div class="form-row"><label>Nombre del cliente</label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="f-cliente" placeholder="Ej: Juan Perez" autocomplete="off"
+          oninput="mostrarSugerencias(this.value)"
+          onkeydown="handleClienteKey(event)">
+        <div class="autocomplete-list" id="ac-list" style="display:none"></div>
+      </div>
+    </div>
+      <div class="form-row"><label>Cantidad de paquetes</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="qty-selector">
+            <button class="qty-btn" onclick="cambiarCantidad(-1)" type="button">−</button>
+            <div class="qty-val" id="f-cantidad-display">1</div>
+            <button class="qty-btn" onclick="cambiarCantidad(1)" type="button">+</button>
+          </div>
+          <input type="hidden" id="f-cantidad" value="1">
+          <span style="font-size:13px;color:#9ca3af" id="f-cantidad-label">paquete</span>
+        </div>
+      </div>
+      <div class="form-row"><label>Monto a cobrar (₲)</label><input type="text" id="f-monto" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('f-pago').focus()}"></div>
+      <div class="form-row"><label>Forma de pago esperada <span style="color:#9ca3af;font-weight:400">(opcional)</span></label>
+        <select id="f-pago" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('f-nota').focus()}">
+          <option value="">Sin especificar</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="qr">Transferencia / QR</option>
+          <option value="prepago">Ya pagado</option>
+          <option value="pendiente">Pendiente (paga despues)</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Nota (opcional)</label><input type="text" id="f-nota" placeholder="Referencia, descripcion..." onkeydown="if(event.key==='Enter'){event.preventDefault();cargarPaqueteYFoco()}"></div>
+      <button class="btn-primary" id="btn-cargar" onclick="cargarPaquete()">Agregar paquete</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="modal-entregar" class="modal-overlay">
+  <div class="modal">
+    <h3>Confirmar entrega</h3>
+    <div class="form-row"><label>Forma de pago recibida</label>
+      <select id="m-pago">
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="qr">Transferencia / QR</option>
+        <option value="prepago">Ya pagado</option>
+        <option value="pendiente">Pendiente (paga despues)</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Monto cobrado (₲)</label><input type="text" id="m-monto" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this)"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" style="margin-top:0" id="btn-confirmar" onclick="confirmarEntrega()">Confirmar entrega</button>
+      <button class="btn-sec" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-grupo" class="modal-overlay">
+  <div class="modal" style="max-width:400px">
+    <h3 id="mg-titulo">Entregar paquetes</h3>
+    <div id="mg-lista"></div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:#6b7280">Total a cobrar:</span>
+      <span style="font-size:18px;font-weight:700;color:#1a1a2e" id="mg-total">₲ 0</span>
+    </div>
+    <div class="form-row" style="margin-top:12px"><label>Forma de pago</label>
+      <select id="mg-pago">
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="qr">Transferencia / QR</option>
+        <option value="prepago">Ya pagado</option>
+        <option value="pendiente">Pendiente (paga despues)</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" style="margin-top:0" id="btn-confirmar-grupo" onclick="confirmarGrupo()">Confirmar entrega</button>
+      <button class="btn-sec" onclick="cerrarModalGrupo()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-cobro" class="modal-overlay">
+  <div class="modal">
+    <h3>Registrar cobro pendiente</h3>
+    <div id="mc-info" style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#92400e"></div>
+    <div class="form-row"><label>Forma de pago</label>
+      <select id="mc-pago">
+        <option value="efectivo">Efectivo</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="qr">Transferencia / QR</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Monto cobrado (₲)</label>
+      <input type="text" id="mc-monto" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this)">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" style="margin-top:0" id="btn-confirmar-cobro" onclick="confirmarCobroPendiente()">Confirmar cobro</button>
+      <button class="btn-sec" onclick="cerrarModalCobro()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function fmtInput(el){
+  const raw=el.value.replace(/[^0-9]/g,'');
+  const num=parseInt(raw||'0',10);
+  el.value=raw?'₲ '+num.toLocaleString('es-PY'):'';
+  el.dataset.raw=raw||'0';
+}
+function displayHora(fh){
+  if(!fh)return '-';
+  if(fh.length<=5)return fh; // old format HH:MM
+  const parts=fh.split(' ');
+  if(parts.length===2){
+    const fecha=parts[0],hora=parts[1];
+    return fecha===hoy()?hora:fecha.slice(5)+' '+hora; // today: show HH:MM, other: MM-DD HH:MM
+  }
+  return fh;
+}
+
+let guardando=false;
+
+function getRaw(id){
+  const el=document.getElementById(id);
+  if(!el.value||el.value.trim()==='')return 0;
+  return Number(el.dataset.raw||el.value.replace(/[^0-9]/g,'')||'0');
+}
+
+const SHEET_ID='1xBVLzA_faygP1WkjcXwqG1PscMA73RJNlLw85poCra8';
+const SA={
+  email:'entregas-app@control-entregas-499619.iam.gserviceaccount.com',
+  key:'-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDqS+QmGivBGVLu\nBxuvm0zFIJHRQGRp1Yhqgf7KjdWZPD2SDNUBTBOhmJ9aowqZHnhprCsi1Rc+ZhNA\nVhRqjk8MsWcC9+i0Jyr3s59u0VSWRyV4k3N5j/eeq+wM+oJEhIReHz0K2vXD2B4t\nDgPW/+Sg01brJ53YlMJm+Or2gzvA9hISdPf823s+FSdjRqnBM7Q6L3ffU0YWJZEI\nWyFb8Ek+3scPioJ7MN5PzIeEcI1RMh2sHW9XZK8lrkQqCfPz5CBCBjuXYvE32Y/d\n+xnvwNAvopHH/A7zhLl4SpVqw/CBF/DA78ahsRf5SZth9LZ2yDBqDkzQmTH75LYT\n6djSuPyVAgMBAAECggEAJhacSk1q24NgZe2l5JBclJdM3TWYnVPnT1k+sHMKTFTs\ntXd8kS9q6ZREI5npuSao8JTallkJ5Ez3yDe2LfRgiXG1i1f97nuHkqkSvBMvqxZ5\n0vY1iYeL+7F7OEjpMHZShnKRm9gop+PUVAK5QRRseHCi6quQD4tvZwoEOHrxFdcb\nSRp9lV1dF3lGP9u44mNpj1QuF/zq6+s3iMPxKw6t0w3+y2R9Y/pF9v3WEiHYHf2J\nspov+wHIaQi0y25V8TXcdGvXPwHae92C2/QjKqkATqI9Erqp+n4J8Oo2YMIk/9TF\n7hQlnULkjAEL5ET30Jet2AocyLpxDPov7e68eH4zKQKBgQD5Pua+Kkzy9PrpFMOQ\ndBE0UajuRZoKcYadeCVuYJUa0g3+maYk1wy3Uo/lJofOJb175J8O7cTF/LN6rPwN\nQWyS2FaLZpGGhTe6JWqZ/TJ3anmRg5FhSwFDD7hfwIYjaStAWQGP8iVYY33xCSZw\nYdEB+AD+IV4wlF4iGDtc1qVzKwKBgQDwpUgwsfOJkB8/exwYPcwkcBnMWQOzF8Mm\nyuZoFb5A+0LTevSKzbf6K2yqcPEaSjhsh1cZmIi2lZweZuu/Zbl+pwxNXW/G7RHW\npZskPEWEXd9WK4eLLG4Ex1YC2GllDOzKewHgV2Wky7mxz+snbpqpPPMxTSokjE7D\nE4B76DZvPwKBgBktPWmgJD22eVHqAwcockRyqznGVhUP+qUVadKIdwdKiJdbNekq\nv+IUuOxQxA8SyN0m7to3MlU9fXO63YsJPMpoh/V02uZXtpVbCjWb2ekuHDGStLC7\nPtljUSB69hHFodTSKNI9h4AyLJqYbgWUG+SzBIanIDiQBCI1iGmMVRIZAoGALd6T\nYBTLYxFBo4wH0ucUnm1vvW/KMLz6yc4rFPPwC9rY5g6txjdoNhtI30Qf8O7symMR\nyyM0C/mAhJsBnL37GZUl1ylUQQq3N77hT4rdhVmPVJF/iJuzbN3CG1C85jIMgJvp\nw6VlDoB2qNoE7MM8X73qbR9URRspeC2jc/rTRWkCgYBwhr0JIFwGNKXeB+uoePCg\n550i7frlmz444P+WBKt0gvQYiDlkkjtMNnPUELS52lgo/WHMPLDPA/eGPvRbqnCs\nN1eKo80543KWmBwhF+11f/dmnQb8pEzOyBYbdRIrXmIt5GZRIO2YWftAKfbux3uY\nNZtueSnJvncRTM0E3/yADA==\n-----END PRIVATE KEY-----\n',
+  uri:'https://oauth2.googleapis.com/token'
+};
+const USERS=[{id:'alcides',name:'Alcides',role:'local'},{id:'joseph',name:'Joseph',role:'local'},{id:'ingrid',name:'Ingrid',role:'ext'},{id:'camila',name:'Camila',role:'ext'}];
+const PL={efectivo:'Efectivo',tarjeta:'Tarjeta',qr:'QR/Transfer.',prepago:'Ya pagado',pendiente:'Pendiente'};
+const PC={efectivo:'p-efectivo',tarjeta:'p-tarjeta',qr:'p-qr',prepago:'p-prepago',pendiente:'p-pendiente'};
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let currentUser=USERS[0],selectedId=null,paquetes=[],retiros=[],todosLosPaquetes=[],todosLosRetiros=[],tok=null,tokExp=0,mesSeleccionado=null;
+
+function fmt(n){return Math.round(Number(n||0)).toLocaleString('es-PY',{useGrouping:true});}
+function hora(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function hoy(){return new Date().toISOString().slice(0,10);}
+function mesAnio(fecha){return fecha?fecha.slice(0,7):'';}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+async function getToken(){
+  if(tok&&Date.now()<tokExp)return tok;
+  const now=Math.floor(Date.now()/1000);
+  const hdr=btoa(JSON.stringify({alg:'RS256',typ:'JWT'})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const clm=btoa(JSON.stringify({iss:SA.email,scope:'https://www.googleapis.com/auth/spreadsheets',aud:SA.uri,exp:now+3600,iat:now})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const u=hdr+'.'+clm;
+  const kd=SA.key.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g,'');
+  const bk=Uint8Array.from(atob(kd),c=>c.charCodeAt(0));
+  const ck=await crypto.subtle.importKey('pkcs8',bk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
+  const sg=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',ck,new TextEncoder().encode(u));
+  const sb=btoa(String.fromCharCode(...new Uint8Array(sg))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const r=await fetch(SA.uri,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${u}.${sb}`});
+  const d=await r.json();tok=d.access_token;tokExp=Date.now()+(d.expires_in-60)*1000;return tok;
+}
+async function sGet(r){const t=await getToken();const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(r)}`,{headers:{Authorization:'Bearer '+t}});return res.json();}
+async function sApp(r,v){const t=await getToken();const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(r)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({values:v})});return res.json();}
+async function sUpd(r,v){const t=await getToken();const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(r)}?valueInputOption=RAW`,{method:'PUT',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({values:v})});return res.json();}
+
+async function init(){
+  try{
+    const t=await getToken();
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`,{headers:{Authorization:'Bearer '+t}});
+    const d=await res.json();const sh=d.sheets?.map(s=>s.properties.title)||[];
+    for(const n of['Paquetes','Retiros']){
+      if(!sh.includes(n))await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:[{addSheet:{properties:{title:n}}}]})});
+    }
+    const hp=await sGet('Paquetes!A1:A1');
+    if(!hp.values)await sApp('Paquetes!A1',[['ID','Fecha','Cliente','Monto','PagoEsperado','Nota','Estado','QuienEntrego','HoraEntrega','MontoReal','PagoReal','CargadoPor']]);
+    const hr=await sGet('Retiros!A1:A1');
+    if(!hr.values)await sApp('Retiros!A1',[['ID','Fecha','Hora','Monto','Motivo','Usuario']]);
+  }catch(e){console.error(e);}
+}
+
+async function cargarTodos(){
+  const [dp,dr]=await Promise.all([sGet('Paquetes!A2:N5000'),sGet('Retiros!A2:F5000')]);
+  todosLosPaquetes=(dp.values||[]).map((r,i)=>({id:r[0],fecha:r[1],cliente:r[2],monto:Number(r[3]||0),pago:r[4],nota:r[5],estado:r[6]||'pendiente',quien:r[7],hora:r[8],montoReal:Number(r[9]||0),pagoReal:r[10],cargadoPor:r[11],estadoMerc:r[12]||'proceso',cantidad:Number(r[13]||1),row:i+2}));
+  todosLosRetiros=(dr.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
+  paquetes=todosLosPaquetes.filter(p=>p.estado==='pendiente'||p.fecha===hoy());
+  retiros=todosLosRetiros.filter(r=>r.fecha===hoy());
+}
+
+async function cargarPaquetes(){
+  document.getElementById('paquetes-content').innerHTML='<div class="loading">Cargando...</div>';
+  try{await cargarTodos();renderPaquetes();}
+  catch(e){document.getElementById('paquetes-content').innerHTML='<div class="empty">Error al cargar. Verifica la conexion.</div>';}
+}
+async function cargarRetiros(){
+  document.getElementById('retiros-lista').innerHTML='<div class="loading">Cargando...</div>';
+  try{
+    const d=await sGet('Retiros!A2:F5000');
+    todosLosRetiros=(d.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
+    retiros=todosLosRetiros.filter(r=>r.fecha===hoy());
+    renderRetiros();
+  }catch(e){document.getElementById('retiros-lista').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+async function cargarCaja(){
+  document.getElementById('panel-caja').innerHTML='<div class="loading">Cargando...</div>';
+  try{await cargarTodos();renderCaja();}
+  catch(e){document.getElementById('panel-caja').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+async function cargarHistorial(){
+  const el=document.getElementById('historial-resultado');
+  el.innerHTML='<div class="loading">Cargando datos...</div>';
+  try{
+    if(!todosLosPaquetes.length)await cargarTodos();
+    const d=new Date();
+    document.getElementById('h-desde').value=new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10);
+    document.getElementById('h-hasta').value=hoy();
+    construirMeses();
+    aplicarFiltro();
+  }catch(e){el.innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+function construirMeses(){
+  const mesesSet=new Set(todosLosPaquetes.filter(p=>p.estado==='entregado').map(p=>mesAnio(p.fecha)));
+  const mesesArr=[...mesesSet].sort().reverse();
+  const picker=document.getElementById('month-picker');
+  if(!mesesArr.length){picker.innerHTML='<span style="color:#9ca3af;font-size:13px">Sin datos aun</span>';return;}
+  picker.innerHTML=mesesArr.map(m=>{
+    const [y,mo]=m.split('-');
+    return `<button class="month-btn${mesSeleccionado===m?' active':''}" onclick="verMes('${m}')">${MESES[parseInt(mo)-1]} ${y}</button>`;
+  }).join('');
+  if(!mesSeleccionado&&mesesArr.length)verMes(mesesArr[0]);
+}
+
+function verMes(mes){
+  mesSeleccionado=mes;
+  document.querySelectorAll('.month-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===(() => {const[y,mo]=mes.split('-');return MESES[parseInt(mo)-1]+' '+y;})()));
+  const[y,mo]=mes.split('-');
+  const nombre=MESES[parseInt(mo)-1]+' '+y;
+  const entregados=todosLosPaquetes.filter(p=>p.estado==='entregado'&&mesAnio(p.fecha)===mes);
+  const retirosM=todosLosRetiros.filter(r=>mesAnio(r.fecha)===mes);
+  const totalEf=entregados.filter(p=>p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
+  const totalTj=entregados.filter(p=>p.pagoReal==='tarjeta').reduce((a,p)=>a+p.montoReal,0);
+  const totalQR=entregados.filter(p=>p.pagoReal==='qr').reduce((a,p)=>a+p.montoReal,0);
+  const totalPend=entregados.filter(p=>p.pagoReal==='pendiente').reduce((a,p)=>a+p.montoReal,0);
+  const totalCob=totalEf+totalTj+totalQR+totalPend;
+  const totalRet=retirosM.reduce((a,r)=>a+r.monto,0);
+  const usuarios=['Alcides','Joseph'];
+  const diasMap={};
+  entregados.forEach(p=>{if(!diasMap[p.fecha])diasMap[p.fecha]={ef:0,tj:0,qr:0,paq:0};diasMap[p.fecha].paq++;if(p.pagoReal==='efectivo')diasMap[p.fecha].ef+=p.montoReal;else if(p.pagoReal==='tarjeta')diasMap[p.fecha].tj+=p.montoReal;else if(p.pagoReal==='qr')diasMap[p.fecha].qr+=p.montoReal;});
+  const diasArr=Object.entries(diasMap).sort((a,b)=>b[0].localeCompare(a[0]));
+  const maxTotal=Math.max(...diasArr.map(([,v])=>v.ef+v.tj+v.qr),1);
+  let h=`<div class="resumen-mes">
+    <div class="resumen-mes-title">${nombre}</div>
+    <div class="resumen-mes-val">₲ ${fmt(totalCob)}</div>
+    <div class="resumen-mes-sub">${entregados.length} entregas &middot; ${retirosM.length} retiros por ₲ ${fmt(totalRet)}</div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Efectivo cobrado</div><div class="metric-val pos">₲ ${fmt(totalEf)}</div></div>
+    <div class="metric"><div class="metric-label">Tarjeta</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
+    <div class="metric"><div class="metric-label">QR / Transfer.</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
+    <div class="metric"><div class="metric-label">Pendientes cobro</div><div class="metric-val">₲ ${fmt(totalPend)}</div></div>
+    <div class="metric"><div class="metric-label">Total retirado</div><div class="metric-val neg">₲ ${fmt(totalRet)}</div></div>
+    <div class="metric"><div class="metric-label">Entregas</div><div class="metric-val">${entregados.length}</div></div>
+  </div>
+  <div class="card">
+    <div class="sec-title" style="margin-bottom:10px">Por usuario</div>`;
+  usuarios.forEach(u=>{
+    const ue=entregados.filter(p=>p.quien===u);
+    const uEf=ue.filter(p=>p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
+    const uTj=ue.filter(p=>p.pagoReal==='tarjeta').reduce((a,p)=>a+p.montoReal,0);
+    const uQR=ue.filter(p=>p.pagoReal==='qr').reduce((a,p)=>a+p.montoReal,0);
+    const uRet=retirosM.filter(r=>r.usuario===u).reduce((a,r)=>a+r.monto,0);
+    h+=`<div class="usr-card">
+      <div class="usr-card-name"><span class="role-local">local</span>${u}</div>
+      <div class="usr-stats">
+        <div class="usr-stat"><div class="usr-stat-label">Entregas</div><div class="usr-stat-val">${ue.length}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">Efectivo</div><div class="usr-stat-val" style="color:#15803d">₲ ${fmt(uEf)}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">Tarjeta</div><div class="usr-stat-val">₲ ${fmt(uTj)}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">QR</div><div class="usr-stat-val">₲ ${fmt(uQR)}</div></div>
+        <div class="usr-stat"><div class="usr-stat-label">Sus retiros</div><div class="usr-stat-val" style="color:#ef4444">₲ ${fmt(uRet)}</div></div>
+      </div>
+    </div>`;
+  });
+  h+='</div>';
+  if(diasArr.length){
+    h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Detalle por dia</div>';
+    h+='<div style="display:flex;gap:12px;margin-bottom:8px;font-size:11px;color:#9ca3af"><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#22c55e;display:inline-block"></span>Efectivo</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#3b82f6;display:inline-block"></span>Tarjeta</span><span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:#8b5cf6;display:inline-block"></span>QR</span></div>';
+    diasArr.forEach(([fecha,v])=>{
+      const total=v.ef+v.tj+v.qr;
+      const wEf=Math.round((v.ef/maxTotal)*120);const wTj=Math.round((v.tj/maxTotal)*120);const wQR=Math.round((v.qr/maxTotal)*120);
+      const [,m,d]=fecha.split('-');
+      h+=`<div class="day-row">
+        <span class="day-fecha">${d}/${m}</span>
+        <span class="day-paq" title="Paquetes">${v.paq}</span>
+        <div class="day-bars">${wEf>0?`<div class="day-bar bar-ef" style="width:${wEf}px"></div>`:''}${wTj>0?`<div class="day-bar bar-tj" style="width:${wTj}px"></div>`:''}${wQR>0?`<div class="day-bar bar-qr" style="width:${wQR}px"></div>`:''}</div>
+        <span class="day-total">₲ ${fmt(total)}</span>
+      </div>`;
+    });
+    h+='</div>';
+  }
+  document.getElementById('resumen-mes-contenido').innerHTML=h;
+}
+
+function aplicarFiltro(){
+  const desde=document.getElementById('h-desde').value;
+  const hasta=document.getElementById('h-hasta').value;
+  const pago=document.getElementById('h-pago').value;
+  const usuario=document.getElementById('h-usuario').value;
+  let filtrados=todosLosPaquetes.filter(p=>p.estado==='entregado');
+  if(desde)filtrados=filtrados.filter(p=>p.fecha>=desde);
+  if(hasta)filtrados=filtrados.filter(p=>p.fecha<=hasta);
+  if(pago)filtrados=filtrados.filter(p=>p.pagoReal===pago);
+  if(usuario)filtrados=filtrados.filter(p=>p.quien===usuario);
+  filtrados.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const totalEf=filtrados.filter(p=>p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
+  const totalTj=filtrados.filter(p=>p.pagoReal==='tarjeta').reduce((a,p)=>a+p.montoReal,0);
+  const totalQR=filtrados.filter(p=>p.pagoReal==='qr').reduce((a,p)=>a+p.montoReal,0);
+  const totalCob=totalEf+totalTj+totalQR;
+  let h=`<div class="metrics">
+    <div class="metric"><div class="metric-label">Registros encontrados</div><div class="metric-val">${filtrados.length}</div></div>
+    <div class="metric"><div class="metric-label">Total cobrado</div><div class="metric-val pos">₲ ${fmt(totalCob)}</div></div>
+    <div class="metric"><div class="metric-label">Efectivo</div><div class="metric-val">₲ ${fmt(totalEf)}</div></div>
+    <div class="metric"><div class="metric-label">Tarjeta</div><div class="metric-val">₲ ${fmt(totalTj)}</div></div>
+    <div class="metric"><div class="metric-label">QR</div><div class="metric-val">₲ ${fmt(totalQR)}</div></div>
+  </div>`;
+  if(filtrados.length){
+    h+='<div class="card"><div class="sec-title" style="margin-bottom:10px">Resultados</div><div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha</th><th>Cliente</th><th>Pago</th><th>Monto</th><th>Entrego</th><th>Hora entrega</th></tr></thead><tbody>';
+    filtrados.forEach(p=>{
+      h+=`<tr><td>${p.fecha}</td><td>${p.cliente}</td><td><span class="pbadge ${PC[p.pagoReal||'prepago']}">${PL[p.pagoReal||'prepago']}</span></td><td style="font-weight:600">${p.montoReal>0?'₲ '+fmt(p.montoReal):'-'}</td><td>${p.quien||'-'}</td><td>${displayHora(p.hora)}</td></tr>`;
+    });
+    h+='</tbody></table></div></div>';
+  }else{
+    h+='<div class="empty">Sin resultados para ese filtro</div>';
+  }
+  document.getElementById('historial-resultado').innerHTML=h;
+}
+
+function renderPaquetes(){
+  const el=document.getElementById('paquetes-content');const q=(document.getElementById('search-cliente')||{}).value||'';
+  const pend=paquetes.filter(p=>p.estado==='pendiente');
+  const entr=paquetes.filter(p=>p.estado==='entregado'&&p.fecha===hoy());
+  const dev=paquetes.filter(p=>p.estado==='devuelta'&&p.fecha===hoy());
+  const can=currentUser.role==='local';
+  let h='';
+  if(pend.length){
+    const grupos={};
+    pend.forEach(p=>{const key=p.cliente.trim().toUpperCase();if(!grupos[key])grupos[key]=[];grupos[key].push(p);});
+    const totalPendPaq=pend.reduce((a,p)=>a+(p.cantidad||1),0);
+    h+=`<div class="card"><div class="section-header"><div class="sec-title">Pendientes (${totalPendPaq})</div><button class="refresh-btn" onclick="cargarPaquetes()">Actualizar</button></div>`;
+    const qVal=(document.getElementById('search-cliente')||{}).value||'';
+    const qUp=qVal.trim().toUpperCase();
+    const gruposEntries=Object.entries(grupos).filter(([key])=>!qUp||key.includes(qUp));
+    if(qUp&&!gruposEntries.length){h+='<div class="empty">Sin resultados para "'+qVal+'"</div>';}
+    gruposEntries.forEach(([key,items])=>{
+      const totalMonto=items.reduce((a,p)=>a+p.monto,0);
+      const count=items.reduce((a,p)=>a+(p.cantidad||1),0);
+      const ids=items.map(p=>p.id).join(',');
+      if(count===1){
+        const p=items[0];
+        h+=`<div class="paq-row"><div class="paq-info"><div class="paq-name">${hl(p.cliente, qVal)}</div><div class="paq-sub">${p.monto>0?'₲ '+fmt(p.monto):'Sin monto'}${p.cantidad>1?' <span style="background:#eff6ff;color:#1d4ed8;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:500">'+p.cantidad+' paq.</span>':''} &nbsp;<span class="pbadge ${PC[p.pago]||'p-prepago'}">${PL[p.pago]||'Sin especificar'}</span>${p.nota?' &middot; '+p.nota:''}<br><span style="font-size:11px;color:#9ca3af">Cargado por ${p.cargadoPor} &middot; ${p.fecha===hoy()?'Hoy':'<span style="color:#ef4444;font-weight:500">'+p.fecha+'</span>'}</span></div></div>${can?`<div class="paq-actions"><button class="act-btn entregar" onclick="abrirModal('${p.id}')">Entregar</button><button class="act-btn devolver" onclick="devolver('${p.id}')">Devolver</button></div>`:''}</div>`;
+      } else {
+        h+=`<div class="paq-row paq-grupo">
+          <div class="paq-grupo-header">
+            <div class="paq-info">
+              <div class="paq-name">${hl(items[0].cliente, qVal)} <span class="multi-badge">${count} paquetes</span></div>
+              <div class="paq-sub">Total: <strong>₲ ${fmt(totalMonto)}</strong> &middot; Cargado por ${items[0].cargadoPor}</div>
+            </div>
+            ${can?`<div class="paq-grupo-btns">
+              <button class="act-btn entregar" onclick="abrirModalGrupo('${ids}',false)">Entregar todos</button>
+              <button class="act-btn parcial-btn" onclick="abrirModalGrupo('${ids}',true)">Parcial</button>
+            </div>`:''}
+          </div>
+          <div class="paq-grupo-items">
+            ${items.map((p,i)=>`<div class="paq-grupo-item"><span class="item-num">#${i+1}</span><span class="item-monto">${p.monto>0?'₲ '+fmt(p.monto):'Sin monto'}</span><span class="pbadge ${PC[p.pago]||'p-prepago'}" style="font-size:10px">${PL[p.pago]||'Sin especificar'}</span>${p.nota?`<span class="item-nota">&middot; ${p.nota}</span>`:''}</div>`).join('')}
+          </div>
+        </div>`;
+      }
+    });
+    h+='</div>';
+  }
+  if(entr.length){
+    h+=`<div class="card"><div class="sec-title">Entregados hoy (${entr.length})</div>`;
+    entr.forEach(p=>{h+=`<div class="paq-row"><div class="paq-info"><div class="paq-name">${p.cliente} <span class="badge badge-done">Entregado</span></div><div class="paq-sub">${p.montoReal>0?'₲ '+fmt(p.montoReal):'Sin cobro'} &nbsp;<span class="pbadge ${PC[p.pagoReal||'prepago']}">${PL[p.pagoReal||'prepago']}</span> &middot; ${p.hora} &middot; ${p.quien}</div></div></div>`;});
+    h+='</div>';
+  }
+  if(dev.length){
+    h+=`<div class="card"><div class="sec-title">Devueltos (${dev.length})</div>`;
+    dev.forEach(p=>{h+=`<div class="paq-row"><div class="paq-info"><div class="paq-name">${p.cliente} <span class="badge badge-devuelta">Devuelto</span></div><div class="paq-sub">${p.hora} &middot; ${p.quien}</div></div></div>`;});
+    h+='</div>';
+  }
+  if(!paquetes.length)h='<div class="empty">No hay paquetes para hoy</div>';
+  el.innerHTML=h;
+}
+
+function renderCaja(){
+  const el=document.getElementById('panel-caja');
+  const entr=paquetes.filter(p=>p.estado==='entregado');
+  const totalEfHoy=entr.filter(p=>p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
+  const totalTjHoy=entr.filter(p=>p.pagoReal==='tarjeta').reduce((a,p)=>a+p.montoReal,0);
+  const totalQRHoy=entr.filter(p=>p.pagoReal==='qr').reduce((a,p)=>a+p.montoReal,0);
+  const totalRetHoy=retiros.reduce((a,r)=>a+r.monto,0);
+  const pend=entr.filter(p=>p.pagoReal==='pendiente').length;
+  const totalEfAcum=todosLosPaquetes.filter(p=>p.estado==='entregado'&&p.pagoReal==='efectivo').reduce((a,p)=>a+p.montoReal,0);
+  const totalRetAcum=todosLosRetiros.reduce((a,r)=>a+r.monto,0);
+  const saldoAcum=totalEfAcum-totalRetAcum;
+  let h=`<div class="${saldoAcum<0?'saldo-box neg':'saldo-box'}">
+    <div>
+      <div class="saldo-label">Efectivo en caja (saldo acumulado)</div>
+      <div class="saldo-sub">Todo el efectivo cobrado historico menos todos los retiros</div>
+    </div>
+    <div class="saldo-val ${saldoAcum<0?'neg':''}">₲ ${fmt(saldoAcum)}</div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Efectivo cobrado hoy</div><div class="metric-val pos">₲ ${fmt(totalEfHoy)}</div></div>
+    <div class="metric"><div class="metric-label">Retiros hoy</div><div class="metric-val neg">₲ ${fmt(totalRetHoy)}</div></div>
+    <div class="metric"><div class="metric-label">Tarjeta hoy</div><div class="metric-val">₲ ${fmt(totalTjHoy)}</div></div>
+    <div class="metric"><div class="metric-label">QR hoy</div><div class="metric-val">₲ ${fmt(totalQRHoy)}</div></div>
+    <div class="metric"><div class="metric-label">Entregados hoy</div><div class="metric-val">${entr.length}/${paquetes.length}</div></div>
+    <div class="metric"><div class="metric-label">Cobros pendientes</div><div class="metric-val">${pend}</div></div>
+  </div>
+  <div class="card"><div class="section-header"><div class="sec-title">Movimientos de hoy</div><button class="refresh-btn" onclick="cargarCaja()">Actualizar</button></div>`;
+  const movs=[
+    ...entr.map(p=>({tipo:'cobro',hora:p.hora,nombre:p.cliente,pago:p.pagoReal,monto:p.montoReal,quien:p.quien})),
+    ...retiros.map(r=>({tipo:'retiro',hora:r.hora,nombre:r.motivo||'Retiro de caja',monto:r.monto,quien:r.usuario}))
+  ].sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  if(movs.length){
+    movs.forEach(m=>{
+      if(m.tipo==='cobro')h+=`<div class="caja-row"><span class="caja-time">${displayHora(m.hora)||'-'}</span><span class="caja-name">${m.nombre}</span><span class="pbadge ${PC[m.pago||'prepago']}">${PL[m.pago||'prepago']}</span><span class="caja-monto cobro">${m.monto>0?'+₲ '+fmt(m.monto):'-'}</span><span class="quien">${m.quien||'-'}</span></div>`;
+      else h+=`<div class="caja-row retiro-row"><span class="caja-time">${m.hora||'-'}</span><span class="caja-name">${m.nombre}</span><span class="retiro-badge">Retiro</span><span class="caja-monto retiro">-₲ ${fmt(m.monto)}</span><span class="quien">${m.quien||'-'}</span></div>`;
+    });
+  }else h+='<div class="empty">Sin movimientos aun hoy</div>';
+  // Cobros pendientes de todas las fechas
+  const todosPendCobro=todosLosPaquetes.filter(p=>p.estado==='entregado'&&p.pagoReal==='pendiente');
+  if(todosPendCobro.length){
+    h+=`<div class="card"><div class="section-header"><div class="sec-title" style="color:#b45309">Cobros pendientes (${todosPendCobro.length})</div></div>`;
+    todosPendCobro.sort((a,b)=>a.fecha.localeCompare(b.fecha)).forEach(p=>{
+      h+=`<div class="pendiente-row">
+        <span class="pendiente-fecha">${p.fecha===hoy()?'Hoy':p.fecha}</span>
+        <span class="pendiente-name">${p.cliente}</span>
+        <span class="pendiente-monto">${p.montoReal>0?'₲ '+fmt(p.montoReal):'S/monto'}</span>
+        ${currentUser.role==='local'?`<button class="cobrar-btn" onclick="abrirModalCobro('${p.id}')">Cobrar</button>`:''}
+      </div>`;
+    });
+    h+='</div>';
+  }
+  h+=`</div><div class="subtotales">
+    <div class="metric"><div class="metric-label">Efectivo total historico</div><div class="metric-val" style="font-size:15px">₲ ${fmt(totalEfAcum)}</div></div>
+    <div class="metric"><div class="metric-label">Retiros historicos</div><div class="metric-val neg" style="font-size:15px">₲ ${fmt(totalRetAcum)}</div></div>
+    <div class="metric"><div class="metric-label">Saldo en caja</div><div class="metric-val ${saldoAcum<0?'neg':'pos'}" style="font-size:15px">₲ ${fmt(saldoAcum)}</div></div>
+  </div>`;
+  el.innerHTML=h;
+}
+
+function renderRetiros(){
+  const el=document.getElementById('retiros-lista');
+  if(!retiros.length){el.innerHTML='<div class="empty">Sin retiros hoy</div>';return;}
+  const total=retiros.reduce((a,r)=>a+r.monto,0);
+  let h=retiros.map(r=>`<div class="caja-row retiro-row"><span class="caja-time">${r.hora}</span><span class="caja-name">${r.motivo||'Sin motivo'}</span><span class="quien">${r.usuario}</span><span class="caja-monto retiro">-₲ ${fmt(r.monto)}</span></div>`).join('');
+  h+=`<div style="display:flex;justify-content:space-between;padding:10px 0 0;border-top:1px solid #e5e7eb;margin-top:8px"><span style="font-size:13px;font-weight:600;color:#6b7280">Total retirado hoy</span><span style="font-size:15px;font-weight:700;color:#ef4444">-₲ ${fmt(total)}</span></div>`;
+  el.innerHTML=h;
+}
+
+async function registrarRetiro(){
+  if(currentUser.role==='ext'){toast('Solo usuarios del local pueden hacer retiros');return;}
+  const monto=getRaw('r-monto');
+  if(!monto||monto<=0){toast('Ingresa un monto valido');return;}
+  const btn=document.getElementById('btn-retirar');btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    await sApp('Retiros!A2',[['R'+Date.now(),hoy(),hora(),monto,document.getElementById('r-motivo').value.trim(),currentUser.name]]);
+    document.getElementById('r-monto').value='';document.getElementById('r-motivo').value='';
+    toast('Retiro registrado');
+    const d=await sGet('Retiros!A2:F5000');
+    todosLosRetiros=(d.values||[]).map(r=>({id:r[0],fecha:r[1],hora:r[2],monto:Number(r[3]||0),motivo:r[4],usuario:r[5]}));
+    retiros=todosLosRetiros.filter(r=>r.fecha===hoy());
+    renderRetiros();
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Registrar retiro';
+}
+
+function abrirModal(id){
+  selectedId=id;const p=paquetes.find(x=>x.id===id);
+  document.getElementById('m-pago').value=p.pago||'efectivo';
+  const mEl=document.getElementById('m-monto');
+  if(p.monto){mEl.value='₲ '+Number(p.monto).toLocaleString('es-PY');mEl.dataset.raw=p.monto;}
+  else{mEl.value='';mEl.dataset.raw='0';}
+  document.getElementById('modal-entregar').classList.add('show');
+}
+function cerrarModal(){document.getElementById('modal-entregar').classList.remove('show');selectedId=null;}
+
+async function confirmarEntrega(){
+  const p=paquetes.find(x=>x.id===selectedId);if(!p)return;
+  const btn=document.getElementById('btn-confirmar');btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    const pr=document.getElementById('m-pago').value,mr=getRaw('m-monto'),h=hora(),fh=hoy()+' '+h;
+    await sUpd(`Paquetes!G${p.row}:K${p.row}`,[['entregado',currentUser.name,fh,mr,pr]]);
+    p.estado='entregado';p.quien=currentUser.name;p.hora=fh;p.montoReal=mr;p.pagoReal=pr;
+    cerrarModal();renderPaquetes();toast('Entrega confirmada');
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Confirmar entrega';
+}
+
+async function devolver(id){
+  const p=paquetes.find(x=>x.id===id);if(!p)return;
+  if(!confirm('Marcar como devuelto el paquete de '+p.cliente+'?'))return;
+  try{
+    const h=hora(),fh=hoy()+' '+h;
+    await sUpd(`Paquetes!G${p.row}:I${p.row}`,[['devuelta',currentUser.name,fh]]);
+    p.estado='devuelta';p.quien=currentUser.name;p.hora=fh;renderPaquetes();toast('Marcado como devuelto');
+  }catch(e){toast('Error al guardar.');}
+}
+
+async function cargarPaqueteYFoco(){
+  if(guardando)return;
+  await cargarPaquete();
+  document.getElementById('f-cliente').focus();
+}
+
+async function cargarPaquete(){
+  if(guardando)return;
+  const cliente=document.getElementById('f-cliente').value.trim();
+  if(!cliente){toast('Ingresa el nombre del cliente');return;}
+  guardando=true;
+  const btn=document.getElementById('btn-cargar');btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    await sApp('Paquetes!A2',[['P'+Date.now(),hoy(),cliente,getRaw('f-monto'),document.getElementById('f-pago').value,document.getElementById('f-nota').value.trim(),'pendiente','','',0,'',currentUser.name,document.getElementById('f-estadomerc')?document.getElementById('f-estadomerc').value:'proceso',parseInt(document.getElementById('f-cantidad')?document.getElementById('f-cantidad').value:1)||1]]);
+    document.getElementById('f-cliente').value='';const fmEl=document.getElementById('f-monto');fmEl.value='';fmEl.dataset.raw='0';document.getElementById('f-nota').value='';document.getElementById('f-pago').value='';
+    toast('Paquete cargado');document.getElementById('f-cliente').focus();
+  }catch(e){toast('Error al guardar.');}
+  guardando=false;btn.disabled=false;btn.textContent='Agregar paquete';
+}
+
+
+const PASSWORDS={alcides:'2026',joseph:'2018',ingrid:'431568',camila:'1425'};
+
+function doLogin(){
+  const uid=document.getElementById('login-user').value;
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  if(!uid){err.textContent='Selecciona un usuario';return;}
+  if(!pass){err.textContent='Ingresa tu contrasena';return;}
+  if(PASSWORDS[uid]!==pass){err.textContent='Contrasena incorrecta';document.getElementById('login-pass').value='';return;}
+  err.textContent='';
+  currentUser=USERS.find(u=>u.id===uid);
+  document.getElementById('login-overlay').style.display='none';
+  buildBar();
+  const cb=document.getElementById('tab-cargar-btn');
+  const hb=document.getElementById('tab-historial');
+  if(hb)hb.style.display=currentUser.id==='alcides'?'none':'';
+  if(currentUser.role==='ext'||currentUser.id==='joseph'){cb.style.display='';setTab(currentUser.role==='ext'?'cargar':'paquetes');}
+  else{cb.style.display='none';setTab('paquetes');}
+  init().then(()=>cargarPaquetes());
+}
+
+function doLogout(){
+  document.getElementById('login-overlay').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('login-error').textContent='';
+  document.getElementById('user-sel').innerHTML='';
+}
+
+
+let grupoIds=[];
+
+function abrirModalGrupo(idsStr, parcial){
+  grupoIds=idsStr.split(',');
+  const items=grupoIds.map(id=>paquetes.find(p=>p.id===id)).filter(Boolean);
+  const titulo=parcial?`Entrega parcial — ${items[0].cliente}`:`Entregar todos — ${items[0].cliente}`;
+  document.getElementById('mg-titulo').textContent=titulo;
+  let lista='';
+  items.forEach((p,i)=>{
+    const checked=!parcial?'checked':'';
+    lista+=`<div class="paq-check-row" onclick="toggleCheck('mgc-${p.id}')">
+      <input type="checkbox" id="mgc-${p.id}" ${checked} onchange="actualizarTotal()" onclick="event.stopPropagation()">
+      <div class="paq-check-label">#${i+1} ${p.monto>0?'— ₲ '+fmt(p.monto):'Sin monto'}${p.nota?' ('+p.nota+')':''}</div>
+    </div>`;
+  });
+  document.getElementById('mg-lista').innerHTML=lista;
+  actualizarTotal();
+  document.getElementById('modal-grupo').classList.add('show');
+}
+
+function toggleCheck(id){
+  const cb=document.getElementById(id);
+  cb.checked=!cb.checked;
+  actualizarTotal();
+}
+
+function actualizarTotal(){
+  const items=grupoIds.map(id=>paquetes.find(p=>p.id===id)).filter(Boolean);
+  let total=0;
+  items.forEach((p,i)=>{
+    const cb=document.getElementById('mgc-'+p.id);
+    if(cb&&cb.checked)total+=p.monto;
+  });
+  document.getElementById('mg-total').textContent='₲ '+fmt(total);
+}
+
+async function confirmarGrupo(){
+  const items=grupoIds.map(id=>paquetes.find(p=>p.id===id)).filter(Boolean);
+  const seleccionados=items.filter(p=>document.getElementById('mgc-'+p.id)?.checked);
+  if(!seleccionados.length){toast('Selecciona al menos un paquete');return;}
+  const btn=document.getElementById('btn-confirmar-grupo');
+  btn.disabled=true;btn.textContent='Guardando...';
+  const pagoReal=document.getElementById('mg-pago').value;
+  const h=hora(),fh=hoy()+' '+h;
+  try{
+    for(const p of seleccionados){
+      const montoReal=p.monto;
+      await sUpd(`Paquetes!G${p.row}:K${p.row}`,[['entregado',currentUser.name,fh,montoReal,pagoReal]]);
+      p.estado='entregado';p.quien=currentUser.name;p.hora=fh;p.montoReal=montoReal;p.pagoReal=pagoReal;
+    }
+    cerrarModalGrupo();
+    renderPaquetes();
+    toast(`${seleccionados.length} paquete(s) entregado(s)`);
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Confirmar entrega';
+}
+
+function cerrarModalGrupo(){
+  document.getElementById('modal-grupo').classList.remove('show');
+  grupoIds=[];
+}
+
+
+let acIndex=-1;
+
+function getNombresUnicos(){
+  const nombres=new Set();
+  todosLosPaquetes.forEach(p=>{if(p.cliente)nombres.add(p.cliente.trim().toUpperCase());});
+  return [...nombres].sort();
+}
+
+function mostrarSugerencias(val){
+  const list=document.getElementById('ac-list');
+  acIndex=-1;
+  if(!val||val.length<2){list.style.display='none';return;}
+  const q=val.trim().toUpperCase();
+  const matches=getNombresUnicos().filter(n=>n.includes(q));
+  if(!matches.length){list.style.display='none';return;}
+  list.innerHTML=matches.slice(0,8).map((n,i)=>{
+    const highlighted=n.replace(q,`<strong>${q}</strong>`);
+    return `<div class="autocomplete-item" data-val="${n}" onmousedown="elegirSugerencia('${n.replace(/'/g,"\'")}')">
+      ${highlighted}
+    </div>`;
+  }).join('');
+  list.style.display='block';
+}
+
+function elegirSugerencia(val){
+  const input=document.getElementById('f-cliente');
+  input.value=val;
+  document.getElementById('ac-list').style.display='none';
+  acIndex=-1;
+  document.getElementById('f-monto').focus();
+}
+
+function handleClienteKey(e){
+  const list=document.getElementById('ac-list');
+  const items=list.querySelectorAll('.autocomplete-item');
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    acIndex=Math.min(acIndex+1,items.length-1);
+    items.forEach((it,i)=>it.classList.toggle('selected',i===acIndex));
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    acIndex=Math.max(acIndex-1,0);
+    items.forEach((it,i)=>it.classList.toggle('selected',i===acIndex));
+  } else if(e.key==='Enter'){
+    if(acIndex>=0&&items[acIndex]){
+      elegirSugerencia(items[acIndex].dataset.val);
+    } else {
+      list.style.display='none';
+      document.getElementById('f-monto').focus();
+    }
+  } else if(e.key==='Escape'){
+    list.style.display='none';
+    acIndex=-1;
+  }
+}
+
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.autocomplete-wrap')){
+    const list=document.getElementById('ac-list');
+    if(list)list.style.display='none';
+  }
+});
+
+
+function hl(text, q){
+  if(!q)return text;
+  const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  return text.replace(re,'<span class="highlight">$1</span>');
+}
+
+function filtrarPaquetes(q){
+  renderPaquetes();
+}
+
+
+async function cargarStock(){
+  document.getElementById('panel-stock').innerHTML='<div class="loading">Cargando stock...</div>';
+  try{
+    if(!todosLosPaquetes.length)await cargarTodos();
+    renderStock();
+  }catch(e){document.getElementById('panel-stock').innerHTML='<div class="empty">Error al cargar.</div>';}
+}
+
+function renderStock(){
+  const el=document.getElementById('panel-stock');
+  const pendientes=todosLosPaquetes.filter(p=>p.estado==='pendiente');
+  const total=pendientes.reduce((a,p)=>a+p.monto,0);
+  const hoy_pend=pendientes.filter(p=>p.fecha===hoy());
+  const ant_pend=pendientes.filter(p=>p.fecha<hoy());
+
+  // Group by client
+  const grupos={};
+  pendientes.forEach(p=>{
+    const key=p.cliente.trim().toUpperCase();
+    if(!grupos[key])grupos[key]={nombre:p.cliente,items:[],total:0};
+    grupos[key].items.push(p);
+    grupos[key].total+=p.monto;
+  });
+  const gruposArr=Object.values(grupos).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  const totalPaq=pendientes.reduce((a,p)=>a+(p.cantidad||1),0);
+  const hoyPaq=hoy_pend.reduce((a,p)=>a+(p.cantidad||1),0);
+  const antPaq=ant_pend.reduce((a,p)=>a+(p.cantidad||1),0);
+  let h=`<div class="metrics">
+    <div class="metric"><div class="metric-label">Paquetes pendientes</div><div class="metric-val">${totalPaq}</div></div>
+    <div class="metric"><div class="metric-label">Valor total pendiente</div><div class="metric-val" style="font-size:16px">₲ ${fmt(total)}</div></div>
+    <div class="metric"><div class="metric-label">De hoy</div><div class="metric-val">${hoyPaq}</div></div>
+    <div class="metric"><div class="metric-label">De dias anteriores</div><div class="metric-val${ant_pend.length>0?' neg':''}">${antPaq}</div></div>
+  </div>`;
+
+  if(pendientes.length){
+    h+=`<div class="card"><div class="section-header"><div class="sec-title">Detalle por cliente (${gruposArr.length} clientes)</div><button class="refresh-btn" onclick="cargarStock()">Actualizar</button></div>`;
+    gruposArr.forEach(g=>{
+      const tq=g.items.reduce((a,p)=>a+(p.cantidad||1),0);
+      const tqBadge=tq>1?` <span style="font-size:12px;background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:20px;font-weight:500">${tq} paq.</span>`:'';
+      h+=`<div class="paq-row">
+        <div class="paq-info">
+          <div class="paq-name">${g.nombre}${tqBadge}</div>
+          <div class="paq-sub">
+            ${g.items.map(p=>`<span style="margin-right:8px">${p.fecha===hoy()?'<span style="color:#15803d;font-size:11px">Hoy</span>':'<span style="color:#ef4444;font-size:11px">'+p.fecha+'</span>'} ${p.monto>0?'₲ '+fmt(p.monto):'Sin monto'}</span>`).join('')}
+          </div>
+        </div>
+        <div style="font-weight:600;color:#1a1a2e;font-size:14px;flex-shrink:0">₲ ${fmt(g.total)}</div>
+      </div>`;
+    });
+    h+='</div>';
+  } else {
+    h+='<div class="empty">No hay paquetes pendientes</div>';
+  }
+  el.innerHTML=h;
+}
+
+
+let cobroId=null;
+
+function abrirModalCobro(id){
+  cobroId=id;
+  const p=todosLosPaquetes.find(x=>x.id===id);
+  if(!p)return;
+  document.getElementById('mc-info').innerHTML=`<strong>${p.cliente}</strong><br>Fecha entrega: ${p.fecha} &middot; Monto original: ${p.montoReal>0?'₲ '+fmt(p.montoReal):'Sin monto'}`;
+  const mEl=document.getElementById('mc-monto');
+  if(p.montoReal){mEl.value='₲ '+Number(p.montoReal).toLocaleString('es-PY');mEl.dataset.raw=p.montoReal;}
+  else{mEl.value='';mEl.dataset.raw='0';}
+  document.getElementById('modal-cobro').classList.add('show');
+}
+
+function cerrarModalCobro(){
+  document.getElementById('modal-cobro').classList.remove('show');
+  cobroId=null;
+}
+
+async function confirmarCobroPendiente(){
+  const p=todosLosPaquetes.find(x=>x.id===cobroId);
+  if(!p)return;
+  const btn=document.getElementById('btn-confirmar-cobro');
+  btn.disabled=true;btn.textContent='Guardando...';
+  try{
+    const pagoReal=document.getElementById('mc-pago').value;
+    const montoReal=getRaw('mc-monto');
+    await sUpd(`Paquetes!J${p.row}:K${p.row}`,[[montoReal,pagoReal]]);
+    p.montoReal=montoReal;p.pagoReal=pagoReal;
+    cerrarModalCobro();
+    await cargarCaja();
+    toast('Cobro registrado');
+  }catch(e){toast('Error al guardar.');}
+  btn.disabled=false;btn.textContent='Confirmar cobro';
+}
+
+function cambiarCantidad(delta){
+  const input=document.getElementById('f-cantidad');
+  const display=document.getElementById('f-cantidad-display');
+  const label=document.getElementById('f-cantidad-label');
+  let val=parseInt(input.value||'1')+delta;
+  if(val<1)val=1;
+  if(val>99)val=99;
+  input.value=val;
+  display.textContent=val;
+  label.textContent=val===1?'paquete':'paquetes';
+}
+
+function buildBar(){
+  document.getElementById('user-sel').innerHTML=`<span class="usr-btn ${currentUser.role==='local'?'active-local':'active-ext'}" style="cursor:default">${currentUser.name}<span class="${currentUser.role==='ext'?'role-ext':'role-local'}">${currentUser.role==='ext'?'ext':'local'}</span></span>`;
+  const rc=document.getElementById('retiro-form-card');
+  if(rc)rc.style.display=currentUser.role==='local'?'block':'none';
+}
+function setUser(id){}
+function setTab(t){
+  ['paquetes','caja','retiros','historial','stock','cargar'].forEach(x=>{
+    const p=document.getElementById('panel-'+x),b=document.getElementById('tab-'+x);
+    if(p)p.classList.toggle('active',x===t);
+    if(b)b.classList.toggle('active',x===t);
+  });
+  if(t==='caja')cargarCaja();
+  else if(t==='paquetes')cargarPaquetes();
+  else if(t==='retiros')cargarRetiros();
+  else if(t==='historial')cargarHistorial();
+  else if(t==='stock')cargarStock();
+}
+
+</script>
+</body>
+</html>
