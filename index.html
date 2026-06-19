@@ -1275,6 +1275,8 @@ function enfocarSiguienteBillete(idx){
 }
 
 async function guardarControlCaja(){
+  if(guardando)return;
+  guardando=true;
   const conteo={};
   DENOMINACIONES.forEach(d=>{
     const el=document.getElementById('bill-'+d);
@@ -1307,7 +1309,7 @@ async function guardarControlCaja(){
     toast('Conteo guardado');
     renderCaja();
   }catch(e){toast('Error al guardar.');}
-  btn.disabled=false;btn.textContent='Guardar conteo';
+  guardando=false;btn.disabled=false;btn.textContent='Guardar conteo';
 }
 
 async function guardarSaldoInicial(){
