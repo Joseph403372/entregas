@@ -505,6 +505,7 @@ let saldoInicial=0;
 let controlCajaData=[];
 const DENOMINACIONES=[100000,50000,20000,10000,5000,2000,1000,500];
 let billetesActuales={};
+let otrosActuales=0;
 
 function getRaw(id){
   const el=document.getElementById(id);
@@ -578,12 +579,18 @@ async function cargarTodos(){
     const dc=await sGet('Caja!A1:C1000');
     const cajaRows=dc.values||[];
     billetesActuales={};
+    otrosActuales=0;
     cajaRows.forEach(r=>{
       if(r[0]==='SaldoInicial'||r[0]==='Saldo inicial'||r[0].toLowerCase()==='saldo inicial')saldoInicial=Number(r[1]||0);
       else if(r[0]&&r[0].length===10){
         controlCajaData.push({fecha:r[0],real:Number(r[1]||0)});
         if(r[0]===hoy()&&r[2]){
-          try{billetesActuales=JSON.parse(r[2]);}catch(e){}
+          try{
+            const parsed=JSON.parse(r[2]);
+            otrosActuales=Number(parsed.otros||0);
+            delete parsed.otros;
+            billetesActuales=parsed;
+          }catch(e){}
         }
       }
     });
@@ -855,11 +862,15 @@ function renderCaja(){
     h+=`<div class="ctrl-caja-box">
       <div class="ctrl-caja-title">Control de caja efectivo - Conteo de billetes</div>
       <div class="billetes-grid" id="billetes-grid">
-        ${DENOMINACIONES.map(d=>`<div class="billete-box">
+        ${DENOMINACIONES.map((d,bi)=>`<div class="billete-box">
           <div class="billete-label">₲ ${fmt(d)}</div>
-          <input type="number" class="billete-input" id="bill-${d}" min="0" placeholder="0" value="${billetesActuales[d]||''}" oninput="actualizarTotalBilletes()">
+          <input type="number" class="billete-input" id="bill-${d}" min="0" placeholder="0" value="${billetesActuales[d]||''}" oninput="actualizarTotalBilletes()" onkeydown="if(event.key==='Enter'){event.preventDefault();enfocarSiguienteBillete(${bi})}">
           <div class="billete-subtotal" id="subtotal-${d}">₲ 0</div>
         </div>`).join('')}
+      </div>
+      <div class="form-row" style="margin-bottom:14px">
+        <label>Cheques y otros (₲)</label>
+        <input type="text" id="ctrl-otros" placeholder="₲ 0" inputmode="numeric" oninput="fmtInput(this);actualizarTotalBilletes()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('btn-ctrl-save').focus()}" ${otrosActuales?`value="₲ ${fmt(otrosActuales)}" data-raw="${otrosActuales}"`:''}>
       </div>
       <div class="billetes-total">
         <span class="billetes-total-label">Total contado</span>
@@ -1249,9 +1260,18 @@ function actualizarTotalBilletes(){
     const subEl=document.getElementById('subtotal-'+d);
     if(subEl)subEl.textContent='₲ '+fmt(subtotal);
   });
+  const otrosEl=document.getElementById('ctrl-otros');
+  const otros=otrosEl?getRaw('ctrl-otros'):0;
+  total+=otros;
   const totalEl=document.getElementById('billetes-total-val');
   if(totalEl)totalEl.textContent='₲ '+fmt(total);
   return total;
+}
+
+function enfocarSiguienteBillete(idx){
+  const siguienteId=idx+1<DENOMINACIONES.length?'bill-'+DENOMINACIONES[idx+1]:'ctrl-otros';
+  const el=document.getElementById(siguienteId);
+  if(el)el.focus();
 }
 
 async function guardarControlCaja(){
@@ -1261,8 +1281,10 @@ async function guardarControlCaja(){
     const cant=parseInt(el.value)||0;
     if(cant>0)conteo[d]=cant;
   });
+  const otros=getRaw('ctrl-otros');
+  conteo.otros=otros;
   const monto=actualizarTotalBilletes();
-  if(monto<=0){toast('Ingresa al menos un billete');return;}
+  if(monto<=0){toast('Ingresa al menos un billete o monto');return;}
   const btn=document.getElementById('btn-ctrl-save');
   btn.disabled=true;btn.textContent='Guardando...';
   try{
@@ -1281,6 +1303,7 @@ async function guardarControlCaja(){
     if(idx>=0)controlCajaData[idx].real=monto;
     else controlCajaData.push({fecha:hoy(),real:monto});
     billetesActuales=conteo;
+    otrosActuales=otros;
     toast('Conteo guardado');
     renderCaja();
   }catch(e){toast('Error al guardar.');}
